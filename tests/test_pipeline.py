@@ -38,9 +38,10 @@ def test_process_videos_dedup(tmp_path):
     urls = ['http://example.com/video1']
     list_file = tmp_path / 'urls.txt'
     list_file.write_text('\n'.join(urls))
-    with mock.patch('contradiction_clipper.download_video', side_effect=fake_download):
+    with mock.patch('contradiction_clipper.download_video', side_effect=fake_download) as mock_dl:
         cc.process_videos(str(list_file), db_path)
         cc.process_videos(str(list_file), db_path)
+        assert mock_dl.call_count == 1
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM videos')
     count = cursor.fetchone()[0]
