@@ -9,13 +9,14 @@ from datetime import datetime
 
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
 DB_PATH = 'db/contradictions.db'
 
 
 def init_db(conn):
     """Create required tables with UNIQUE constraints."""
+    logging.info('[i] Initializing database schema.')
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -66,6 +67,7 @@ def init_db(conn):
 
 def hash_file(path):
     """Return SHA256 hash of a file."""
+    logging.debug(f'[DEBUG] Hashing file {path}')
     sha256 = hashlib.sha256()
     with open(path, 'rb') as f:
         for chunk in iter(lambda: f.read(8192), b''):
@@ -75,13 +77,16 @@ def hash_file(path):
 
 def download_video(url):
     """Download a video using yt-dlp and return the local path and video id."""
+    logging.info(f'[i] Downloading video from {url}')
     os.makedirs('videos/raw', exist_ok=True)
     vid_res = subprocess.run(
         ['yt-dlp', '--get-id', url], capture_output=True, text=True, check=False
     )
     if vid_res.returncode != 0:
+        logging.error(f"[x] Failed to get video id: {vid_res.stderr.strip()}")
         raise RuntimeError(vid_res.stderr.strip())
     video_id = vid_res.stdout.strip()
+    logging.debug(f'[DEBUG] Video id {video_id} resolved for {url}')
     template = f'videos/raw/{video_id}.%(ext)s'
     res = subprocess.run(
         ['yt-dlp', '-f', 'best', '-o', template, url],
@@ -90,11 +95,14 @@ def download_video(url):
         check=False,
     )
     if res.returncode != 0:
+        logging.error(f"[x] Download failed: {res.stderr.strip()}")
         raise RuntimeError(res.stderr.strip())
     for ext in ['mp4', 'mkv', 'webm', 'flv', 'mov']:
         candidate = os.path.join('videos/raw', f'{video_id}.{ext}')
         if os.path.exists(candidate):
+            logging.info(f'[i] Video downloaded to {candidate}')
             return candidate, video_id
+    logging.error(f'[x] Unable to locate downloaded file for {url}')
     raise FileNotFoundError(f'Unable to locate downloaded file for {url}')
 
 
@@ -165,6 +173,7 @@ def embed_transcripts(db_conn):
 
 
 def _contradiction_score(text_a, text_b):
+    logging.debug('[DEBUG] Scoring possible contradiction')
     if 'not' in text_a.lower() and 'not' not in text_b.lower():
         return 0.9
     if 'not' in text_b.lower() and 'not' not in text_a.lower():
@@ -181,6 +190,7 @@ def detect_contradictions(db_conn):
 
     for i, (id_a, text_a) in enumerate(transcripts):
         for id_b, text_b in transcripts[i + 1 :]:
+            logging.debug(f'[DEBUG] Evaluating {id_a}-{id_b}')
             cursor.execute(
                 'SELECT 1 FROM contradictions WHERE segment_a_id=? AND segment_b_id=?',
                 (id_a, id_b),
@@ -268,6 +278,7 @@ def compile_contradiction_montage(db_conn, output_file='output/contradiction_mon
     logging.info(f"[i] Contradiction montage successfully created: {output_file}")
 
 def main():
+    logging.info('[i] Starting Contradictor Detector pipeline.')
     parser = argparse.ArgumentParser(description='Contradictor Detector - Complete Pipeline')
     parser.add_argument('--video_list', help='Path to file containing YouTube video URLs (one per line)')
     parser.add_argument('--embed', action='store_true', help='Generate embeddings for transcripts.')
