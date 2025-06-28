@@ -25,8 +25,8 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 - `sentence-transformers`
 - `transformers`
 - `moviepy` (version `~=1.0` with FFmpeg installed, required only for `--compile`)
-- `roberta-large-mnli` (Hugging Face model for contradiction detection)
 - `Flask` (for the optional dashboard)
+- The NLI model (`roberta-large-mnli`) is automatically downloaded by `transformers`
 - NLI models are cached in memory during detection for faster repeated runs
 
 ### ⚙️ Installation:
@@ -38,7 +38,8 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 
 **Step 2: Install Python dependencies**
 
-        pip install yt-dlp sentence-transformers transformers moviepy~=1.0 torch torchvision torchaudio roberta-large-mnli Flask
+        pip install yt-dlp sentence-transformers transformers moviepy~=1.0 torch torchvision torchaudio Flask
+        # the NLI model will be downloaded automatically by transformers during detection
         # moviepy only needed when compiling montages
 
 **Step 3: Setup Whisper (optimized for CPU)**

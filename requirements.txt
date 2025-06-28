@@ -5,6 +5,5 @@ moviepy~=1.0
 torch
 torchvision
 torchaudio
-roberta-large-mnli
 Flask
 
