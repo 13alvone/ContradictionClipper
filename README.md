@@ -26,6 +26,7 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 - `transformers`
 - `moviepy` (version `~=1.0` with FFmpeg installed, required only for `--compile`)
 - `roberta-large-mnli` (Hugging Face model for contradiction detection)
+- `Flask` (for the optional dashboard)
 
 ### ⚙️ Installation:
 
@@ -36,7 +37,7 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 
 **Step 2: Install Python dependencies**
 
-        pip install yt-dlp sentence-transformers transformers moviepy~=1.0 torch torchvision torchaudio roberta-large-mnli
+        pip install yt-dlp sentence-transformers transformers moviepy~=1.0 torch torchvision torchaudio roberta-large-mnli Flask
         # moviepy only needed when compiling montages
 
 **Step 3: Setup Whisper (optimized for CPU)**
@@ -63,7 +64,11 @@ Ensure `ffmpeg` is installed and available in your system PATH.
 
 The resulting video montage will be located in:
 
-	output/contradiction_montage.mp4
+        output/contradiction_montage.mp4
+
+3. Launch the dashboard to browse videos, transcripts, and contradictions:
+
+                ./contradiction_clipper.py --dashboard
 
 ---
 
@@ -87,6 +92,7 @@ The resulting video montage will be located in:
 - `--embed`: Generate semantic embeddings.
 - `--detect`: Detect contradictions.
 - `--compile`: Compile detected contradictions into a montage.
+- `--dashboard`: Launch a simple Flask dashboard to browse results.
 - `--top_n`: Number of contradictions to compile (default: 20).
 - `--nli-model`: Hugging Face model path or name for contradiction scoring.
 - `--max_workers`: Number of parallel workers for downloading and transcription (default: 4).

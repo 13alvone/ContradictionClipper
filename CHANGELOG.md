@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2025-07-02
+### Added
+- Flask dashboard for browsing videos, transcripts, and contradictions.
+- `--dashboard` CLI option to launch the web interface.
+
 ## [0.1.4] - 2025-07-01
 ### Added
 - Parallel download and transcription via `--max_workers` flag.
