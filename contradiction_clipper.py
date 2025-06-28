@@ -10,14 +10,6 @@ import subprocess
 import sys
 from datetime import datetime
 
-try:
-    from moviepy.editor import VideoFileClip, concatenate_videoclips
-except Exception as exc:  # pylint: disable=broad-exception-caught
-    logging.error(
-        "[x] Failed to import moviepy. Please install it with 'pip install moviepy'."
-    )
-    sys.exit(1)
-
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
 DB_PATH = 'db/contradictions.db'
@@ -258,6 +250,12 @@ def detect_contradictions(db_conn):
 
 def extract_clip(video_path, start_time, end_time, output_path):
     """Extract a subclip from a video file."""
+    try:
+        from moviepy.editor import VideoFileClip
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        raise ImportError(
+            "moviepy is required for extracting clips. Install it with 'pip install moviepy'."
+        ) from exc
     logging.info(
         "[i] Extracting clip: %s (%s-%ss)", video_path, start_time, end_time
     )
@@ -286,6 +284,12 @@ def compile_contradiction_montage(
 ):
     """Build a montage video showcasing top contradictions."""
     # pylint: disable=too-many-locals
+    try:
+        from moviepy.editor import VideoFileClip, concatenate_videoclips
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        raise ImportError(
+            "moviepy is required for compiling montages. Install it with 'pip install moviepy'."
+        ) from exc
     logging.info('[i] Compiling contradiction montage video.')
     cursor = db_conn.cursor()
 
