@@ -147,6 +147,21 @@ row represents a unique downloaded file and is referenced by entries in the
 
 ---
 
+## 🧪 Running Tests
+
+To run the unit tests without installing every dependency in `requirements.txt`,
+install the few lightweight packages that the tests rely on:
+
+```bash
+pip install numpy Flask
+```
+
+The tests mock out heavy libraries such as `torch`, `sentence-transformers`, and
+`transformers`, so those packages are **not** needed just to execute the test
+suite.
+
+---
+
 ## 🧩 Extensibility & Contribution
 
 - GUI interfaces (Flask/Electron) for ease-of-use.
