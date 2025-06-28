@@ -5,7 +5,6 @@ import hashlib
 import sqlite3
 import sys
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
@@ -14,11 +13,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import contradiction_clipper as cc  # noqa: E402
 # pylint: disable=wrong-import-position
-
-
-# Stub moviepy to allow offline testing
-sys.modules["moviepy"] = mock.Mock()
-sys.modules["moviepy.editor"] = mock.Mock()
 
 
 def test_hash_file_consistency(tmp_path):

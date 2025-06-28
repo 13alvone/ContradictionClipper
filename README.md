@@ -24,7 +24,7 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 - `whisper.cpp`
 - `sentence-transformers`
 - `transformers`
-- `moviepy` (with FFmpeg installed)
+- `moviepy` (with FFmpeg installed, required only for `--compile`)
 
 ### ⚙️ Installation:
 
@@ -35,7 +35,8 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 
 **Step 2: Install Python dependencies**
 
-	pip install yt-dlp sentence-transformers transformers moviepy torch torchvision torchaudio
+        pip install yt-dlp sentence-transformers transformers moviepy torch torchvision torchaudio
+        # moviepy only needed when compiling montages
 
 **Step 3: Setup Whisper (optimized for CPU)**
 
