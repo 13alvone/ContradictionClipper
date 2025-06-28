@@ -54,3 +54,12 @@ def test_unique_url_constraint(tmp_path):
         )
         conn.commit()
     conn.close()
+
+
+def test_schema_version_recorded(tmp_path):
+    """Schema version table should be initialized."""
+    db = tmp_path / "test.db"
+    conn = sqlite3.connect(db)
+    cc.init_db(conn)
+    assert cc.get_schema_version(conn) == cc.SCHEMA_VERSION
+    conn.close()

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.7] - 2025-07-04
+### Added
+- Database schema versioning via `schema_version` table and migration helpers.
+
 ## [0.1.6] - 2025-07-03
 ### Added
 - Text summary generation via `summarize_contradictions`.

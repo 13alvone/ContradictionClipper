@@ -31,6 +31,7 @@ def setup_db(tmp_path):
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(db_path)
     cc.init_db(conn)
+    assert cc.get_schema_version(conn) == cc.SCHEMA_VERSION
     return conn, str(db_path)
 
 
