@@ -8,6 +8,7 @@ import os
 import sqlite3
 import subprocess
 import sys
+import json
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -153,6 +154,50 @@ def process_videos(video_list_path, db_path=DB_PATH):
             logging.error('[x] Failed to process %s: %s', url, exc)
 
     conn.close()
+
+
+def transcribe_videos(db_conn, whisper_bin='./whisper'):
+    """Transcribe new videos using whisper and populate the transcripts table."""
+    logging.info('[i] Transcribing videos.')
+    cursor = db_conn.cursor()
+    cursor.execute('SELECT video_id, file_path FROM videos')
+    videos = cursor.fetchall()
+
+    os.makedirs('transcripts', exist_ok=True)
+
+    for vid, path in videos:
+        cursor.execute('SELECT 1 FROM transcripts WHERE video_id=?', (vid,))
+        if cursor.fetchone():
+            logging.info('[!] Transcript already exists for %s, skipping.', vid)
+            continue
+
+        out_json = os.path.join('transcripts', f'{vid}.json')
+        result = subprocess.run(
+            [whisper_bin, path, '--output_format', 'json', '--output_dir', 'transcripts', '--output_file', vid],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            logging.error('[x] Whisper failed for %s: %s', vid, result.stderr.strip())
+            continue
+        if not os.path.exists(out_json):
+            logging.error('[x] Transcript output missing for %s', vid)
+            continue
+
+        try:
+            with open(out_json, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            for seg in data.get('segments', []):
+                cursor.execute(
+                    'INSERT INTO transcripts (video_id, segment_start, segment_end, text) '
+                    'VALUES (?, ?, ?, ?)',
+                    (vid, seg.get('start'), seg.get('end'), seg.get('text')),
+                )
+            db_conn.commit()
+            logging.info('[i] Transcribed %s', vid)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logging.error('[x] Failed to store transcript for %s: %s', vid, exc)
 
 
 def embed_transcripts(db_conn):
@@ -364,6 +409,11 @@ def main():
         help='Path to file containing YouTube video URLs (one per line)'
     )
     parser.add_argument(
+        '--transcribe',
+        action='store_true',
+        help='Transcribe downloaded videos with whisper.'
+    )
+    parser.add_argument(
         '--embed',
         action='store_true',
         help='Generate embeddings for transcripts.'
@@ -397,6 +447,9 @@ def main():
                 '[x] URL list file does not exist: %s', args.video_list)
             sys.exit(1)
         process_videos(args.video_list)
+
+    if args.transcribe:
+        transcribe_videos(db_conn)
 
     if args.embed:
         embed_transcripts(db_conn)

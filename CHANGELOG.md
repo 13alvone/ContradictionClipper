@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2025-06-29
+### Added
+- `--transcribe` flag to invoke Whisper transcription.
+- New `transcribe_videos` stage populates transcripts table from JSON output.
+- Documentation updated with new flag and dependency notes.
+
 ## [0.1.1] - 2025-06-28
 ### Changed
 - MoviePy is now imported lazily inside `extract_clip` and `compile_contradiction_montage`.

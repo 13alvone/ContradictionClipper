@@ -21,7 +21,7 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 ### 📦 Dependencies:
 - Python 3.x
 - `yt-dlp`
-- `whisper.cpp`
+- `whisper.cpp` (required for `--transcribe`)
 - `sentence-transformers`
 - `transformers`
 - `moviepy` (version `~=1.0` with FFmpeg installed, required only for `--compile`)
@@ -58,7 +58,7 @@ Ensure `ffmpeg` is installed and available in your system PATH.
 
 2. Run the entire pipeline (download, transcribe, embed, detect contradictions, and compile montage):
 
-                ./contradiction_clipper.py --video_list urls.txt --embed --detect --compile --top_n 20
+                ./contradiction_clipper.py --video_list urls.txt --transcribe --embed --detect --compile --top_n 20
 
 The resulting video montage will be located in:
 
@@ -82,6 +82,7 @@ The resulting video montage will be located in:
 ## 🛠️ Command-Line Arguments
 
 - `--video_list`: Path to URLs list.
+- `--transcribe`: Transcribe downloaded videos with Whisper.
 - `--embed`: Generate semantic embeddings.
 - `--detect`: Detect contradictions.
 - `--compile`: Compile detected contradictions into a montage.

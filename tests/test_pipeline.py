@@ -7,6 +7,7 @@ import tempfile
 from unittest import mock
 import sys
 from pathlib import Path
+import subprocess
 
 # Ensure repository root is on the module path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -84,5 +85,36 @@ def test_detect_contradictions_unique(tmp_path):
     cc.detect_contradictions(conn)
     cc.detect_contradictions(conn)
     cursor.execute("SELECT COUNT(*) FROM contradictions")
+    assert cursor.fetchone()[0] == 1
+    conn.close()
+
+
+def test_transcribe_videos_once(tmp_path, monkeypatch):
+    """Transcribing should only occur once per video."""
+    conn, _ = setup_db(tmp_path)
+    cursor = conn.cursor()
+    video_path = tmp_path / "v1.mp4"
+    video_path.write_bytes(b"data")
+    cursor.execute(
+        "INSERT INTO videos(url, video_id, file_path, sha256, dl_timestamp)"
+        " VALUES(?,?,?,?,?)",
+        ("http://x/v1", "v1", str(video_path), "hash", "now"),
+    )
+    conn.commit()
+
+    def fake_run(cmd, capture_output=True, text=True, check=False):
+        out_dir = tmp_path / "transcripts"
+        out_dir.mkdir(exist_ok=True)
+        out_file = out_dir / "v1.json"
+        out_file.write_text('{"segments": [{"start": 0, "end": 1, "text": "hi"}]}')
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.chdir(tmp_path)
+    with mock.patch("contradiction_clipper.subprocess.run", side_effect=fake_run) as mock_run:
+        cc.transcribe_videos(conn)
+        cc.transcribe_videos(conn)
+        assert mock_run.call_count == 1
+
+    cursor.execute("SELECT COUNT(*) FROM transcripts WHERE video_id='v1'")
     assert cursor.fetchone()[0] == 1
     conn.close()
