@@ -288,7 +288,8 @@ def main():
 
     args = parser.parse_args()
 
-    db_conn = sqlite3.connect('db/contradictions.db')
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    db_conn = sqlite3.connect(DB_PATH)
     init_db(db_conn)
 
     if args.video_list:
