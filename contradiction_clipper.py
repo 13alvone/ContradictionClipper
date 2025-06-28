@@ -446,6 +446,48 @@ def compile_contradiction_montage(
     )
 
 
+def summarize_contradictions(db_conn, output_file="output/contradictions.txt"):
+    """Write a human-readable summary of all detected contradictions."""
+    logging.info('[i] Generating contradiction summary: %s', output_file)
+    cursor = db_conn.cursor()
+    cursor.execute(
+        '''
+        SELECT t1.video_id, t1.segment_start, t1.segment_end, t1.text,
+               t2.video_id, t2.segment_start, t2.segment_end, t2.text
+        FROM contradictions c
+        JOIN transcripts t1 ON c.segment_a_id = t1.id
+        JOIN transcripts t2 ON c.segment_b_id = t2.id
+        ORDER BY c.id
+        '''
+    )
+    rows = cursor.fetchall()
+    if not rows:
+        logging.warning('[!] No contradictions found to summarize.')
+        return
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    with open(output_file, 'w', encoding='utf-8') as fh:
+        for (
+            vid1,
+            start1,
+            end1,
+            text1,
+            vid2,
+            start2,
+            end2,
+            text2,
+        ) in rows:
+            start1 = 0 if start1 is None else start1
+            end1 = 0 if end1 is None else end1
+            start2 = 0 if start2 is None else start2
+            end2 = 0 if end2 is None else end2
+            paragraph = (
+                f"In video {vid1} at {start1:.1f}-{end1:.1f}s: \"{text1.strip()}\". "
+                f"This contradicts video {vid2} at {start2:.1f}-{end2:.1f}s: \"{text2.strip()}\"."
+            )
+            fh.write(paragraph + "\n")
+    logging.info('[i] Summary written to %s', output_file)
+
+
 def main():
     """Entry point for the CLI utility."""
     logging.info('[i] Starting Contradiction Clipper pipeline.')
@@ -498,6 +540,16 @@ def main():
         action='store_true',
         help='Launch the web dashboard interface.'
     )
+    parser.add_argument(
+        '--summary',
+        nargs='?',
+        const='output/contradictions.txt',
+        default=None,
+        help=(
+            'Write text summary of contradictions to optional FILE. '
+            'Default file is output/contradictions.txt when flag is used.'
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -523,6 +575,9 @@ def main():
 
     if args.compile:
         compile_contradiction_montage(db_conn, top_n=args.top_n)
+
+    if args.summary:
+        summarize_contradictions(db_conn, args.summary)
 
     db_conn.close()
     logging.info("[i] Contradiction Clipper pipeline completed successfully.")

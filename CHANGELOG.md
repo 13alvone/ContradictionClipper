@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6] - 2025-07-03
+### Added
+- Text summary generation via `summarize_contradictions`.
+- `--summary` CLI flag to write contradiction summaries to a file.
+
 ## [0.1.5] - 2025-07-02
 ### Added
 - Flask dashboard for browsing videos, transcripts, and contradictions.
