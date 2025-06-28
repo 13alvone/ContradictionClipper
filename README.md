@@ -61,14 +61,11 @@ docker run --rm -v "$PWD":/app contradiction-clipper \
         # the NLI model will be downloaded automatically by transformers during detection
         # moviepy only needed when compiling montages
 
-**Step 3: Setup Whisper (optimized for CPU)**
+**Step 3: Setup Whisper**
 
-        git clone https://github.com/ggerganov/whisper.cpp.git
-        cd whisper.cpp
-        make
-        cp ./whisper ../
+        ./install_whisper.sh
 
-        # If whisper is located elsewhere, pass its path via --whisper-bin
+        # If the binary is located elsewhere, pass its path via --whisper-bin
 
 Ensure `ffmpeg` is installed and available in your system PATH.
 
