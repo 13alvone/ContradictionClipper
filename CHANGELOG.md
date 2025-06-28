@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 - `--whisper-bin` CLI option to specify the path to the Whisper binary.
 
+## [0.1.12] - 2025-07-09
+### Fixed
+- Handled `sqlite3.IntegrityError` when recording files to avoid crashes and
+  cleanup temporary duplicates.
+
 ## [0.1.10] - 2025-07-07
 ### Changed
 - NLI models are now cached in memory by `load_nli_model` to avoid repeated

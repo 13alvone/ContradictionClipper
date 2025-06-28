@@ -211,3 +211,28 @@ def test_summarize_contradictions_unique(tmp_path):
     lines = summary.read_text().strip().splitlines()
     assert len(lines) == 1
     conn.close()
+
+
+def test_process_videos_duplicate_files(tmp_path):
+    """Duplicate file hashes should not leave extra files on disk."""
+    conn, db_path = setup_db(tmp_path)
+    urls = ["http://x/v1", "http://x/v2"]
+    list_file = tmp_path / "urls.txt"
+    list_file.write_text("\n".join(urls))
+
+    def fake_dl(url):
+        vid = "same"
+        path = tmp_path / f"{vid}_{url.split('/')[-1]}.mp4"
+        path.write_bytes(b"data")
+        return str(path), vid
+
+    with mock.patch("contradiction_clipper.download_video", side_effect=fake_dl):
+        cc.process_videos(str(list_file), db_path, max_workers=1)
+
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM files")
+    assert cursor.fetchone()[0] == 1
+    cursor.execute("SELECT COUNT(*) FROM videos")
+    assert cursor.fetchone()[0] == 2
+    assert not (tmp_path / "same_v2.mp4").exists()
+    conn.close()
