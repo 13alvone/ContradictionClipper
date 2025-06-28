@@ -342,15 +342,27 @@ def embed_transcripts(db_conn):
             logging.error('[x] Failed to embed transcript %s: %s', tid, exc)
 
 
+_NLI_CACHE = {}
+
+
 def load_nli_model(model_name="roberta-large-mnli"):
-    """Return a scoring function using a transformers NLI model."""
+    """Return a scoring function using a transformers NLI model.
+
+    Models are cached in-memory so repeated calls with the same name do not
+    re-instantiate the tokenizer and model.
+    """
     from transformers import AutoTokenizer, AutoModelForSequenceClassification
     import torch
 
-    logging.info('[i] Loading NLI model: %s', model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name)
-    contr_idx = model.config.label2id.get("CONTRADICTION", 0)
+    if model_name in _NLI_CACHE:
+        logging.info('[i] Reusing cached NLI model: %s', model_name)
+        tokenizer, model, contr_idx = _NLI_CACHE[model_name]
+    else:
+        logging.info('[i] Loading NLI model: %s', model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        contr_idx = model.config.label2id.get("CONTRADICTION", 0)
+        _NLI_CACHE[model_name] = (tokenizer, model, contr_idx)
 
     def score(text_a, text_b):
         logging.debug('[DEBUG] Scoring contradiction for: %s | %s', text_a, text_b)
