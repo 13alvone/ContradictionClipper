@@ -20,7 +20,8 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 
 ### 🐳 Docker (Preferred)
 
-Build the Docker image:
+Build the Docker image (installs all Python requirements and executes
+`install_whisper.sh` automatically):
 
 ```
 docker build -t contradiction-clipper .
@@ -57,15 +58,17 @@ docker run --rm -v "$PWD":/app contradiction-clipper \
 
 **Step 2: Install Python dependencies**
 
-        pip install yt-dlp sentence-transformers transformers moviepy~=1.0 torch torchvision torchaudio Flask
-        # the NLI model will be downloaded automatically by transformers during detection
-        # moviepy only needed when compiling montages
+        pip install -r requirements.txt
+        # all Python dependencies are pinned in requirements.txt
 
-**Step 3: Setup Whisper**
+**Step 3: Set up Whisper (or use Docker)**
 
         ./install_whisper.sh
 
         # If the binary is located elsewhere, pass its path via --whisper-bin
+
+Docker users may skip Steps 2 and 3 after building the image because it installs
+dependencies and runs `install_whisper.sh` automatically.
 
 Ensure `ffmpeg` is installed and available in your system PATH.
 
