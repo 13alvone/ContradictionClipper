@@ -464,7 +464,9 @@ def summarize_contradictions(db_conn, output_file="output/contradictions.txt"):
     if not rows:
         logging.warning('[!] No contradictions found to summarize.')
         return
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    dir_name = os.path.dirname(output_file)
+    if dir_name:
+        os.makedirs(dir_name, exist_ok=True)
     with open(output_file, 'w', encoding='utf-8') as fh:
         for (
             vid1,
