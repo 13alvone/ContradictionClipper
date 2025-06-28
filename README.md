@@ -30,9 +30,11 @@ docker build -t contradiction-clipper .
 Run the pipeline (mount the working directory so results persist):
 
 ```
-docker run --rm -v "$PWD":/app contradiction-clipper \
-    python contradiction_clipper.py --video_list urls.txt \
-    --transcribe --embed --detect --compile
+    docker run --rm -v "$PWD":/app contradiction-clipper \
+        python contradiction_clipper.py --video_list urls.txt \
+        --transcribe --embed --detect --compile
+    # The container will run install_whisper.sh automatically if the
+    # whisper binary or model are missing in the mounted directory.
 ```
 
 ---
@@ -68,6 +70,8 @@ docker run --rm -v "$PWD":/app contradiction-clipper \
 
         # This builds whisper.cpp and downloads the default model to ./models
         # If the binary lives elsewhere, pass its path via --whisper-bin
+        # If you skip this step, the pipeline will automatically run the
+        # script when transcription is requested.
 
 Docker users may skip Steps 2 and 3 after building the image because it installs
 dependencies and runs `install_whisper.sh` automatically.

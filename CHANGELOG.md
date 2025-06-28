@@ -2,10 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.14] - 06-28-2025
+## [0.1.16] - 06-29-2025
 ### Added
-- `install_whisper.sh` script automates cloning and building `whisper.cpp`.
-- README updated to reference the new installation script.
+- Automatic invocation of `install_whisper.sh` when the Whisper binary or model
+  is missing.
+- README updated with note about automatic installation and Docker usage.
 
 ## [0.1.15] - 06-28-2025
 ### Fixed
@@ -13,6 +14,11 @@ All notable changes to this project will be documented in this file.
   Whisper model so transcription works out of the box.
 - `transcribe_videos` checks for the binary and model before running and
   logs a helpful error if either is missing.
+
+## [0.1.14] - 06-28-2025
+### Added
+- `install_whisper.sh` script automates cloning and building `whisper.cpp`.
+- README updated to reference the new installation script.
 
 ## [0.1.13] - 06-27-2025
 ### Changed
