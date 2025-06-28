@@ -1,12 +1,12 @@
-# Contradictor Clipper
+# Contradiction Clipper
 
 **A powerful, automated local tool to detect and expose contradictions across multiple video sources.**
 
 ---
 
-## 📝 What is Contradictor Detector?
+## 📝 What is Contradiction Clipper?
 
-Contradictor Detector automates the extraction of contradictory statements from multiple videos (e.g., political pundits, public figures) by:
+Contradiction Clipper automates the extraction of contradictory statements from multiple videos (e.g., political pundits, public figures) by:
 
 - Downloading videos from provided URLs.
 - Transcribing videos into timestamped segments using Whisper AI.
@@ -31,7 +31,7 @@ Contradictor Detector automates the extraction of contradictory statements from 
 **Step 1: Clone the repository**
 	
 	git clone <your_repo_url>
-	cd ContradictorClipper
+	cd ContradictionClipper
 
 **Step 2: Install Python dependencies**
 
@@ -57,7 +57,7 @@ Ensure `ffmpeg` is installed and available in your system PATH.
 
 2. Run the entire pipeline (download, transcribe, embed, detect contradictions, and compile montage):
 
-		./contradictor_detector.py --video_list urls.txt --embed --detect --compile --top_n 20
+		./contradiction_clipper.py --video_list urls.txt --embed --detect --compile --top_n 20
 
 The resulting video montage will be located in:
 

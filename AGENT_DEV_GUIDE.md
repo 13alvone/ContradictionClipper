@@ -58,6 +58,21 @@ Use transactions per major step; commit only when the sub-step finishes.
 • Documentation  Update README & this guide whenever the CLI or DB schema
   changes—single source of truth.
 
+### CLI Flags
+• `--video_list`  Path to a text file of URLs to process.
+• `--embed`       Generate embeddings for transcripts.
+• `--detect`      Identify contradictions between segments.
+• `--compile`     Build a contradiction montage video.
+• `--top_n`       Number of contradictions to include when compiling.
+
+### Prerequisites
+• Python 3.x and `sqlite3` (built in)
+• `yt-dlp` for video downloads
+• `whisper.cpp` compiled binary
+• `sentence-transformers` and `transformers`
+• `torch`, `torchvision`, `torchaudio`
+• `moviepy` with FFmpeg installed
+
 ──────────────────────────────────────────────────────────────────────────────
 5. FUTURE NICE-TO-HAVES (NOT YET MANDATORY)
 ──────────────────────────────────────────────────────────────────────────────
