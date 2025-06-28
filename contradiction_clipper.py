@@ -278,8 +278,8 @@ def compile_contradiction_montage(db_conn, output_file='output/contradiction_mon
     logging.info(f"[i] Contradiction montage successfully created: {output_file}")
 
 def main():
-    logging.info('[i] Starting Contradictor Detector pipeline.')
-    parser = argparse.ArgumentParser(description='Contradictor Detector - Complete Pipeline')
+    logging.info('[i] Starting Contradiction Clipper pipeline.')
+    parser = argparse.ArgumentParser(description='Contradiction Clipper - Complete Pipeline')
     parser.add_argument('--video_list', help='Path to file containing YouTube video URLs (one per line)')
     parser.add_argument('--embed', action='store_true', help='Generate embeddings for transcripts.')
     parser.add_argument('--detect', action='store_true', help='Detect contradictions in transcripts.')
@@ -307,7 +307,7 @@ def main():
         compile_contradiction_montage(db_conn, top_n=args.top_n)
 
     db_conn.close()
-    logging.info("[i] Contradictor Detector pipeline completed successfully.")
+    logging.info("[i] Contradiction Clipper pipeline completed successfully.")
 
 if __name__ == "__main__":
     main()
