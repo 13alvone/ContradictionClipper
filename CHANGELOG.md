@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.14] - 06-28-2025
+### Added
+- `install_whisper.sh` script automates cloning and building `whisper.cpp`.
+- README updated to reference the new installation script.
+
 ## [0.1.13] - 06-27-2025
 ### Changed
 - Replaced placeholder SHA-256 transcript embeddings with actual vectors from
