@@ -26,7 +26,7 @@ echo "[i] Building whisper.cpp"
 make $MAKE_FLAGS
 
 echo "[i] Moving binary to $WHISPER_BIN"
-cp ./main "$WHISPER_BIN"
+cp ./build/bin/main "$WHISPER_BIN"
 cd "$ROOT_DIR"
 
 if [ -f "$WHISPER_BIN" ] && [ -x "$WHISPER_BIN" ]; then
