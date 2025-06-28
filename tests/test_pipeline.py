@@ -11,8 +11,6 @@ from pathlib import Path
 # Ensure repository root is on the module path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-
-
 import contradiction_clipper as cc  # noqa: E402
 # pylint: disable=wrong-import-position
 

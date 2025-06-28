@@ -254,7 +254,8 @@ def extract_clip(video_path, start_time, end_time, output_path):
         from moviepy.editor import VideoFileClip
     except Exception as exc:  # pylint: disable=broad-exception-caught
         raise ImportError(
-            "moviepy is required for extracting clips. Install it with 'pip install moviepy'."
+            "moviepy is required for extracting clips. "
+            "Install it with 'pip install moviepy'."
         ) from exc
     logging.info(
         "[i] Extracting clip: %s (%s-%ss)", video_path, start_time, end_time
@@ -288,7 +289,8 @@ def compile_contradiction_montage(
         from moviepy.editor import VideoFileClip, concatenate_videoclips
     except Exception as exc:  # pylint: disable=broad-exception-caught
         raise ImportError(
-            "moviepy is required for compiling montages. Install it with 'pip install moviepy'."
+            "moviepy is required for compiling montages. "
+            "Install it with 'pip install moviepy'."
         ) from exc
     logging.info('[i] Compiling contradiction montage video.')
     cursor = db_conn.cursor()
