@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.9] - 2025-07-06
+### Changed
+- Enabled SQLite WAL mode before threaded writes in `process_videos` and `transcribe_videos` to reduce lock contention.
+
 ## [0.1.7] - 2025-07-04
 ### Added
 - Database schema versioning via `schema_version` table and migration helpers.
