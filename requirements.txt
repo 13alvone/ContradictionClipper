@@ -1,7 +1,7 @@
 yt-dlp
 sentence-transformers
 transformers
-moviepy
+moviepy~=1.0
 torch
 torchvision
 torchaudio
