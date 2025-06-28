@@ -9,6 +9,8 @@ import sqlite3
 import subprocess
 import sys
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -111,65 +113,90 @@ def download_video(url):
     raise FileNotFoundError(f'Unable to locate downloaded file for {url}')
 
 
-def process_videos(video_list_path, db_path=DB_PATH):
+def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
     """Download videos, compute hashes and record them if unseen."""
-    logging.info('[i] Processing videos.')
+    logging.info('[i] Processing videos with %s workers.', max_workers)
     conn = sqlite3.connect(db_path)
     init_db(conn)
     cursor = conn.cursor()
 
     with open(video_list_path, 'r', encoding='utf-8') as f:
-        urls = [line.strip() for line in f if line.strip()]
+        raw_urls = [line.strip() for line in f if line.strip()]
 
-    for url in urls:
+    urls = []
+    for url in raw_urls:
+        cursor.execute('SELECT id FROM videos WHERE url=?', (url,))
+        if cursor.fetchone():
+            logging.info('[!] Already processed URL, skipping: %s', url)
+            continue
+        if url not in urls:
+            urls.append(url)
+
+    def worker(url):
+        thread_name = threading.current_thread().name
+        conn_w = sqlite3.connect(db_path, check_same_thread=False)
+        cur = conn_w.cursor()
         try:
-            cursor.execute('SELECT id FROM videos WHERE url=?', (url,))
-            if cursor.fetchone():
-                logging.info('[!] Already processed URL, skipping: %s', url)
-                continue
+            cur.execute('SELECT id FROM videos WHERE url=?', (url,))
+            if cur.fetchone():
+                logging.info('[!] [%s] Already processed URL, skipping: %s', thread_name, url)
+                return
 
-            logging.info('[i] Downloading %s', url)
+            logging.info('[i] [%s] Downloading %s', thread_name, url)
             path, vid = download_video(url)
             file_hash = hash_file(path)
 
-            cursor.execute(
-                'SELECT id FROM videos WHERE sha256=?', (file_hash,))
-            if cursor.fetchone():
-                logging.info(
-                    '[!] Duplicate video content for %s; removing.', url
-                )
+            cur.execute('SELECT id FROM videos WHERE sha256=?', (file_hash,))
+            if cur.fetchone():
+                logging.info('[!] [%s] Duplicate video content for %s; removing.', thread_name, url)
                 os.remove(path)
-                continue
+                return
 
-            cursor.execute(
-                (
-                    'INSERT INTO videos (url, video_id, file_path, sha256, '
-                    'dl_timestamp) VALUES (?, ?, ?, ?, ?)'
-                ),
-                (url, vid, path, file_hash, datetime.utcnow().isoformat()),
-            )
-            conn.commit()
-            logging.info('[i] Stored video %s', vid)
-        except Exception as exc:
-            logging.error('[x] Failed to process %s: %s', url, exc)
+            try:
+                cur.execute(
+                    (
+                        'INSERT INTO videos (url, video_id, file_path, sha256, '
+                        'dl_timestamp) VALUES (?, ?, ?, ?, ?)'
+                    ),
+                    (url, vid, path, file_hash, datetime.utcnow().isoformat()),
+                )
+                conn_w.commit()
+                logging.info('[i] [%s] Stored video %s', thread_name, vid)
+            except sqlite3.IntegrityError:
+                logging.info('[!] [%s] Video already recorded for %s', thread_name, url)
+                os.remove(path)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logging.error('[x] [%s] Failed to process %s: %s', thread_name, url, exc)
+        finally:
+            conn_w.close()
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        executor.map(worker, urls)
 
     conn.close()
 
 
-def transcribe_videos(db_conn, whisper_bin='./whisper'):
+def transcribe_videos(db_conn, whisper_bin='./whisper', max_workers=4):
     """Transcribe new videos using whisper and populate the transcripts table."""
-    logging.info('[i] Transcribing videos.')
+    logging.info('[i] Transcribing videos with %s workers.', max_workers)
     cursor = db_conn.cursor()
     cursor.execute('SELECT video_id, file_path FROM videos')
     videos = cursor.fetchall()
 
     os.makedirs('transcripts', exist_ok=True)
 
-    for vid, path in videos:
-        cursor.execute('SELECT 1 FROM transcripts WHERE video_id=?', (vid,))
-        if cursor.fetchone():
-            logging.info('[!] Transcript already exists for %s, skipping.', vid)
-            continue
+    db_path = db_conn.execute('PRAGMA database_list').fetchone()[2]
+
+    def worker(item):
+        vid, path = item
+        thread_name = threading.current_thread().name
+        conn_w = sqlite3.connect(db_path, check_same_thread=False)
+        cur = conn_w.cursor()
+        cur.execute('SELECT 1 FROM transcripts WHERE video_id=?', (vid,))
+        if cur.fetchone():
+            logging.info('[!] [%s] Transcript already exists for %s, skipping.', thread_name, vid)
+            conn_w.close()
+            return
 
         out_json = os.path.join('transcripts', f'{vid}.json')
         result = subprocess.run(
@@ -179,25 +206,32 @@ def transcribe_videos(db_conn, whisper_bin='./whisper'):
             check=False,
         )
         if result.returncode != 0:
-            logging.error('[x] Whisper failed for %s: %s', vid, result.stderr.strip())
-            continue
+            logging.error('[x] [%s] Whisper failed for %s: %s', thread_name, vid, result.stderr.strip())
+            conn_w.close()
+            return
         if not os.path.exists(out_json):
-            logging.error('[x] Transcript output missing for %s', vid)
-            continue
+            logging.error('[x] [%s] Transcript output missing for %s', thread_name, vid)
+            conn_w.close()
+            return
 
         try:
             with open(out_json, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             for seg in data.get('segments', []):
-                cursor.execute(
+                cur.execute(
                     'INSERT INTO transcripts (video_id, segment_start, segment_end, text) '
                     'VALUES (?, ?, ?, ?)',
                     (vid, seg.get('start'), seg.get('end'), seg.get('text')),
                 )
-            db_conn.commit()
-            logging.info('[i] Transcribed %s', vid)
+            conn_w.commit()
+            logging.info('[i] [%s] Transcribed %s', thread_name, vid)
         except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging.error('[x] Failed to store transcript for %s: %s', vid, exc)
+            logging.error('[x] [%s] Failed to store transcript for %s: %s', thread_name, vid, exc)
+        finally:
+            conn_w.close()
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        executor.map(worker, videos)
 
 
 def embed_transcripts(db_conn):
@@ -452,6 +486,12 @@ def main():
         default=20,
         help='Number of contradictions to include in the montage.'
     )
+    parser.add_argument(
+        '--max_workers',
+        type=int,
+        default=4,
+        help='Maximum parallel workers for download and transcription.'
+    )
 
     args = parser.parse_args()
 
@@ -464,10 +504,10 @@ def main():
             logging.error(
                 '[x] URL list file does not exist: %s', args.video_list)
             sys.exit(1)
-        process_videos(args.video_list)
+        process_videos(args.video_list, max_workers=args.max_workers)
 
     if args.transcribe:
-        transcribe_videos(db_conn)
+        transcribe_videos(db_conn, max_workers=args.max_workers)
 
     if args.embed:
         embed_transcripts(db_conn)

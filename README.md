@@ -59,7 +59,7 @@ Ensure `ffmpeg` is installed and available in your system PATH.
 
 2. Run the entire pipeline (download, transcribe, embed, detect contradictions, and compile montage):
 
-                ./contradiction_clipper.py --video_list urls.txt --transcribe --embed --detect --compile --top_n 20
+                ./contradiction_clipper.py --video_list urls.txt --transcribe --embed --detect --compile --top_n 20 --max_workers 4
 
 The resulting video montage will be located in:
 
@@ -89,6 +89,7 @@ The resulting video montage will be located in:
 - `--compile`: Compile detected contradictions into a montage.
 - `--top_n`: Number of contradictions to compile (default: 20).
 - `--nli-model`: Hugging Face model path or name for contradiction scoring.
+- `--max_workers`: Number of parallel workers for downloading and transcription (default: 4).
 
 ---
 

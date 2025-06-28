@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2025-07-01
+### Added
+- Parallel download and transcription via `--max_workers` flag.
+- Per-worker logging and thread-safe database writes.
+### Fixed
+- Prevented duplicate entries during concurrent operations.
+
 ## [0.1.3] - 2025-06-30
 ### Added
 - Lightweight NLI scoring via Hugging Face models.
