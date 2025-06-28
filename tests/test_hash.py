@@ -18,6 +18,7 @@ sys.modules.setdefault("moviepy", types.ModuleType("moviepy"))
 sys.modules.setdefault("moviepy.editor", types.ModuleType("moviepy.editor"))
 
 import contradiction_clipper as cc  # noqa: E402
+
 # pylint: disable=wrong-import-position
 
 
@@ -50,7 +51,8 @@ def test_unique_url_constraint(tmp_path):
     conn.commit()
     with pytest.raises(sqlite3.IntegrityError):
         cursor.execute(
-            "INSERT INTO videos (url, file_hash, dl_timestamp) VALUES (?, ?, ?)",
+            "INSERT INTO videos (url, file_hash, dl_timestamp) "
+            "VALUES (?, ?, ?)",
             ("http://example.com/a", "hash2", "now"),
         )
         conn.commit()
