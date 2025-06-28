@@ -14,7 +14,7 @@ cd whisper.cpp
 make
 
 echo "[i] Copying binary"
-cp ./build/bin/main "$ROOT_DIR/whisper"
+cp ./build/bin/whisper-cli "$ROOT_DIR/whisper"
 
 echo "[i] Cleaning up"
 cd "$ROOT_DIR"

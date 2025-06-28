@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
   is missing.
 - README updated with note about automatic installation and Docker usage.
 
+## [0.1.17] - 06-30-2025
+### Changed
+- Installation scripts now copy `whisper-cli` from whisper.cpp instead of `main`.
+- README notes the binary change in the Whisper setup instructions.
+
 ## [0.1.15] - 06-28-2025
 ### Fixed
 - `install_whisper.sh` and `build_whisper.sh` now download the default
