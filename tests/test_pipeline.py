@@ -120,9 +120,14 @@ def test_transcribe_videos_once(tmp_path, monkeypatch):
     video_path = tmp_path / "v1.mp4"
     video_path.write_bytes(b"data")
     cursor.execute(
-        "INSERT INTO videos(url, video_id, file_path, sha256, dl_timestamp)"
+        "INSERT INTO files(sha256, video_id, file_path, size_bytes, hash_ts)"
         " VALUES(?,?,?,?,?)",
-        ("http://x/v1", "v1", str(video_path), "hash", "now"),
+        ("hash", "v1", str(video_path), 4, "now"),
+    )
+    cursor.execute(
+        "INSERT INTO videos(url, file_hash, dl_timestamp)"
+        " VALUES(?,?,?)",
+        ("http://x/v1", "hash", "now"),
     )
     conn.commit()
 
@@ -151,9 +156,14 @@ def test_transcribe_parallel_once(tmp_path, monkeypatch):
     video_path = tmp_path / "v2.mp4"
     video_path.write_bytes(b"data")
     cursor.execute(
-        "INSERT INTO videos(url, video_id, file_path, sha256, dl_timestamp)"
+        "INSERT INTO files(sha256, video_id, file_path, size_bytes, hash_ts)"
         " VALUES(?,?,?,?,?)",
-        ("http://x/v2", "v2", str(video_path), "hash2", "now"),
+        ("hash2", "v2", str(video_path), 4, "now"),
+    )
+    cursor.execute(
+        "INSERT INTO videos(url, file_hash, dl_timestamp)"
+        " VALUES(?,?,?)",
+        ("http://x/v2", "hash2", "now"),
     )
     conn.commit()
 

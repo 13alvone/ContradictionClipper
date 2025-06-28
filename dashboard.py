@@ -39,7 +39,10 @@ def create_app(db_path=DB_PATH):
 
     @app.route('/videos')
     def list_videos():
-        rows = query('SELECT video_id, url FROM videos')
+        rows = query(
+            'SELECT f.video_id AS video_id, v.url AS url '
+            'FROM videos v JOIN files f ON v.file_hash = f.sha256'
+        )
         html = ['<h1>Videos</h1>']
         for row in rows:
             html.append(

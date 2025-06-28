@@ -20,8 +20,8 @@ A concise handbook for any engineer who continues work on **ContradictionClipper
 ──────────────────────────────────────────────────────────────────────────────
 2. ABSOLUTE “NO DUPLICATE” RULES
 ──────────────────────────────────────────────────────────────────────────────
-A. Never download the same *resolved* URL twice  
-   • Maintain `videos(url PRIMARY KEY, video_id, dl_timestamp, file_path)`  
+A. Never download the same *resolved* URL twice
+   • Maintain `videos(url PRIMARY KEY, file_hash, dl_timestamp)`
    • A UNIQUE constraint on `url` (or canonicalized URL) aborts duplicates.
 
 B. Never transcribe the same *file content* twice  
