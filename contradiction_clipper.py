@@ -10,10 +10,13 @@ import subprocess
 import sys
 from datetime import datetime
 
-from moviepy.editor import VideoFileClip  # pylint: disable=import-error
-from moviepy.editor import (
-    concatenate_videoclips,
-)  # pylint: disable=import-error
+try:
+    from moviepy.editor import VideoFileClip, concatenate_videoclips
+except Exception as exc:  # pylint: disable=broad-exception-caught
+    logging.error(
+        "[x] Failed to import moviepy. Please install it with 'pip install moviepy'."
+    )
+    sys.exit(1)
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
