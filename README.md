@@ -85,6 +85,14 @@ The resulting video montage will be located in:
 
 ---
 
+## Database Schema
+
+Contradiction Clipper stores its data in an SQLite database. A `schema_version`
+table tracks migrations so newer releases can upgrade the schema safely. The
+current schema version is `1`.
+
+---
+
 ## 🛠️ Command-Line Arguments
 
 - `--video_list`: Path to URLs list.

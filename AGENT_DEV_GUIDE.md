@@ -70,7 +70,7 @@ Use transactions per major step; commit only when the sub-step finishes.
 ──────────────────────────────────────────────────────────────────────────────
 6. HAND-OFF CHECKLIST
 ──────────────────────────────────────────────────────────────────────────────
-☐  All schema migrations version-controlled (e.g., `schema_version` table).  
+☑  All schema migrations version-controlled via the `schema_version` table.
 ☐  Code passes pylint / flake8 with < 5 warnings.  
 ☐  `README.md` reflects every new CLI flag and environment prerequisite.  
 ☐  `CHANGELOG.md` updated with date, author, and high-level bullet points.  

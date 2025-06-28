@@ -17,6 +17,39 @@ import dashboard
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
 DB_PATH = 'db/contradictions.db'
+SCHEMA_VERSION = 1
+
+def get_schema_version(conn):
+    """Return the current schema version, or 0 if table missing."""
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            'SELECT version FROM schema_version ORDER BY version DESC LIMIT 1'
+        )
+        row = cursor.fetchone()
+        return row[0] if row else 0
+    except sqlite3.OperationalError:
+        return 0
+
+
+def migrate_db(conn, target_version=SCHEMA_VERSION):
+    """Apply migrations up to the target schema version."""
+    current = get_schema_version(conn)
+    cursor = conn.cursor()
+    if current == 0:
+        init_db(conn)
+        current = SCHEMA_VERSION
+    if current < target_version:
+        # Placeholder for future migrations
+        cursor.execute(
+            'INSERT INTO schema_version(version, applied_at) VALUES (?, ?)',
+            (target_version, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+    elif current > target_version:
+        raise RuntimeError(
+            f'Database schema version {current} newer than supported {target_version}'
+        )
 
 
 def init_db(conn):
@@ -67,7 +100,21 @@ def init_db(conn):
         )
         """
     )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS schema_version (
+            version INTEGER PRIMARY KEY,
+            applied_at TEXT
+        )
+        """
+    )
     conn.commit()
+    if get_schema_version(conn) == 0:
+        cursor.execute(
+            'INSERT INTO schema_version(version, applied_at) VALUES (?, ?)',
+            (SCHEMA_VERSION, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
 
 
 def hash_file(path):
@@ -118,7 +165,7 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
     """Download videos, compute hashes and record them if unseen."""
     logging.info('[i] Processing videos with %s workers.', max_workers)
     conn = sqlite3.connect(db_path)
-    init_db(conn)
+    migrate_db(conn)
     cursor = conn.cursor()
 
     with open(video_list_path, 'r', encoding='utf-8') as f:
@@ -557,7 +604,7 @@ def main():
 
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     db_conn = sqlite3.connect(DB_PATH)
-    init_db(db_conn)
+    migrate_db(db_conn)
 
     if args.video_list:
         if not os.path.exists(args.video_list):
