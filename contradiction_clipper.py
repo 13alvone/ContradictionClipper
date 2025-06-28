@@ -24,6 +24,22 @@ SCHEMA_VERSION = 2
 _EMBED_MODELS = {}
 
 
+def ensure_whisper_installed(whisper_bin):
+    """Build whisper.cpp and download the model if missing."""
+    script = os.path.join(os.path.dirname(__file__), "install_whisper.sh")
+    if os.path.isfile(whisper_bin) and os.path.isfile(os.path.join("models", "ggml-base.en.bin")):
+        return True
+    if not os.path.isfile(script):
+        logging.error("[x] install_whisper.sh not found: %s", script)
+        return False
+    logging.info("[i] Running install_whisper.sh to set up Whisper.")
+    result = subprocess.run([script], capture_output=True, text=True)
+    if result.returncode != 0:
+        logging.error("[x] install_whisper.sh failed: %s", result.stderr.strip())
+        return False
+    return os.path.isfile(whisper_bin) and os.path.isfile(os.path.join("models", "ggml-base.en.bin"))
+
+
 def get_schema_version(conn):
     """Return the current schema version, or 0 if table missing."""
     cursor = conn.cursor()
@@ -278,17 +294,11 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
     Populate the transcripts table.
     """
     logging.info("[i] Transcribing videos with %s workers.", max_workers)
-    if not os.path.isfile(whisper_bin):
-        logging.error("[x] Whisper binary not found: %s", whisper_bin)
-        logging.error("[x] Run install_whisper.sh or pass --whisper-bin")
-        return
     model_file = os.path.join("models", "ggml-base.en.bin")
-    if not os.path.isfile(model_file):
-        logging.error(
-            "[x] Whisper model missing: %s. Run install_whisper.sh to download it.",
-            model_file,
-        )
-        return
+    if not os.path.isfile(whisper_bin) or not os.path.isfile(model_file):
+        if not ensure_whisper_installed(whisper_bin):
+            logging.error("[x] Whisper setup failed. Cannot transcribe.")
+            return
     db_conn.execute("PRAGMA journal_mode=WAL")
     cursor = db_conn.cursor()
     cursor.execute("SELECT video_id, file_path FROM files")

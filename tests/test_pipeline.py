@@ -268,3 +268,39 @@ def test_process_videos_duplicate_files(tmp_path):
     assert cursor.fetchone()[0] == 2
     assert not (tmp_path / "same_v2.mp4").exists()
     conn.close()
+
+
+def test_auto_install_whisper(tmp_path, monkeypatch):
+    """transcribe_videos should run install_whisper.sh when binary missing."""
+    conn, _ = setup_db(tmp_path)
+    cursor = conn.cursor()
+    video_path = tmp_path / "v3.mp4"
+    video_path.write_bytes(b"data")
+    cursor.execute(
+        "INSERT INTO files(sha256, video_id, file_path, size_bytes, hash_ts)"
+        " VALUES(?,?,?,?,?)",
+        ("hash3", "v3", str(video_path), 4, "now"),
+    )
+    cursor.execute(
+        "INSERT INTO videos(url, file_hash, dl_timestamp) VALUES(?,?,?)",
+        ("http://x/v3", "hash3", "now"),
+    )
+    conn.commit()
+
+    install_script = tmp_path / "install_whisper.sh"
+    install_script.write_text("#!/bin/bash\ntouch whisper\nmkdir -p models\ntouch models/ggml-base.en.bin\n")
+    install_script.chmod(0o755)
+
+    monkeypatch.chdir(tmp_path)
+    with monkeypatch.context() as m:
+        def fake_run(cmd, capture_output=True, text=True):
+            assert cmd[0].endswith("install_whisper.sh")
+            subprocess.run([install_script])
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        m.setattr(cc, "subprocess", mock.Mock(run=fake_run))
+        cc.ensure_whisper_installed(str(tmp_path / "whisper"))
+
+    assert (tmp_path / "whisper").exists()
+    assert (tmp_path / "models" / "ggml-base.en.bin").exists()
+    conn.close()
