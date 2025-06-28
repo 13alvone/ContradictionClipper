@@ -175,6 +175,7 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
     """Download videos, compute hashes and record them if unseen."""
     logging.info('[i] Processing videos with %s workers.', max_workers)
     conn = sqlite3.connect(db_path)
+    conn.execute('PRAGMA journal_mode=WAL')
     migrate_db(conn)
     cursor = conn.cursor()
 
@@ -193,6 +194,7 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
     def worker(url):
         thread_name = threading.current_thread().name
         conn_w = sqlite3.connect(db_path, check_same_thread=False)
+        conn_w.execute('PRAGMA journal_mode=WAL')
         cur = conn_w.cursor()
         try:
             cur.execute('SELECT id FROM videos WHERE url=?', (url,))
@@ -251,6 +253,7 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
 def transcribe_videos(db_conn, whisper_bin='./whisper', max_workers=4):
     """Transcribe new videos using whisper and populate the transcripts table."""
     logging.info('[i] Transcribing videos with %s workers.', max_workers)
+    db_conn.execute('PRAGMA journal_mode=WAL')
     cursor = db_conn.cursor()
     cursor.execute('SELECT video_id, file_path FROM files')
     videos = cursor.fetchall()
@@ -263,6 +266,7 @@ def transcribe_videos(db_conn, whisper_bin='./whisper', max_workers=4):
         vid, path = item
         thread_name = threading.current_thread().name
         conn_w = sqlite3.connect(db_path, check_same_thread=False)
+        conn_w.execute('PRAGMA journal_mode=WAL')
         cur = conn_w.cursor()
         cur.execute('SELECT 1 FROM transcripts WHERE video_id=?', (vid,))
         if cur.fetchone():
