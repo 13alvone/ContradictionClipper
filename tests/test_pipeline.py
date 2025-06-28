@@ -172,3 +172,31 @@ def test_transcribe_parallel_once(tmp_path, monkeypatch):
     cursor.execute("SELECT COUNT(*) FROM transcripts WHERE video_id='v2'")
     assert cursor.fetchone()[0] == 1
     conn.close()
+
+
+def test_summarize_contradictions_unique(tmp_path):
+    """Summary file should contain each contradiction pair only once."""
+    conn, _ = setup_db(tmp_path)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO transcripts(video_id, segment_start, segment_end, text)"
+        " VALUES('v1', 0, 1, 'no')"
+    )
+    cursor.execute(
+        "INSERT INTO transcripts(video_id, segment_start, segment_end, text)"
+        " VALUES('v1', 2, 3, 'yes')"
+    )
+    conn.commit()
+
+    def fake_loader(_model):
+        return lambda a, b: 0.9
+
+    with mock.patch("contradiction_clipper.load_nli_model", fake_loader):
+        cc.detect_contradictions(conn)
+
+    summary = tmp_path / "out.txt"
+    cc.summarize_contradictions(conn, str(summary))
+
+    lines = summary.read_text().strip().splitlines()
+    assert len(lines) == 1
+    conn.close()

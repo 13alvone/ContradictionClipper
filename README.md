@@ -93,6 +93,8 @@ The resulting video montage will be located in:
 - `--detect`: Detect contradictions.
 - `--compile`: Compile detected contradictions into a montage.
 - `--dashboard`: Launch a simple Flask dashboard to browse results.
+- `--summary`: Output text summaries of contradictions to a file
+  (default: `output/contradictions.txt`).
 - `--top_n`: Number of contradictions to compile (default: 20).
 - `--nli-model`: Hugging Face model path or name for contradiction scoring.
 - `--max_workers`: Number of parallel workers for downloading and transcription (default: 4).
