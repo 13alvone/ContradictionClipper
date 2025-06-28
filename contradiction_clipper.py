@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import logging
+import numpy as np
 import os
 import sqlite3
 import subprocess
@@ -18,6 +19,9 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 DB_PATH = "db/contradictions.db"
 SCHEMA_VERSION = 2
+
+# Cached sentence-transformer models
+_EMBED_MODELS = {}
 
 
 def get_schema_version(conn):
@@ -361,12 +365,27 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
         executor.map(worker, videos)
 
 
-def embed_transcripts(db_conn):
+def load_embedding_model(model_name="all-MiniLM-L6-v2"):
+    """Return a sentence-transformer model, cached for reuse."""
+    if model_name in _EMBED_MODELS:
+        logging.info("[i] Reusing cached embedding model: %s", model_name)
+        return _EMBED_MODELS[model_name]
+    from sentence_transformers import SentenceTransformer
+
+    logging.info("[i] Loading embedding model: %s", model_name)
+    model = SentenceTransformer(model_name)
+    _EMBED_MODELS[model_name] = model
+    return model
+
+
+def embed_transcripts(db_conn, model_name="all-MiniLM-L6-v2"):
     """Generate embeddings for transcripts without existing embeddings."""
     logging.info("[i] Embedding transcripts.")
     cursor = db_conn.cursor()
     cursor.execute("SELECT id, text FROM transcripts")
     rows = cursor.fetchall()
+
+    model = load_embedding_model(model_name)
 
     for tid, text in rows:
         cursor.execute(
@@ -379,14 +398,17 @@ def embed_transcripts(db_conn):
             continue
 
         try:
-            emb = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            embedding = model.encode(text, show_progress_bar=False)
+            if isinstance(embedding, list) or getattr(embedding, "ndim", 1) > 1:
+                embedding = embedding[0]
+            emb_blob = np.asarray(embedding, dtype=np.float32).tobytes()
             cursor.execute(
                 (
                     "INSERT INTO embeddings "
                     "(transcript_id, embedding, created_at) "
                     "VALUES (?, ?, ?)"
                 ),
-                (tid, emb.encode("utf-8"), datetime.utcnow().isoformat()),
+                (tid, sqlite3.Binary(emb_blob), datetime.utcnow().isoformat()),
             )
             db_conn.commit()
             logging.info("[i] Embedded transcript %s", tid)
