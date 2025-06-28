@@ -152,11 +152,17 @@ def test_transcribe_videos_once(tmp_path, monkeypatch):
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
     monkeypatch.chdir(tmp_path)
+    whisper_bin = tmp_path / "whisper"
+    whisper_bin.write_text("echo stub")
+    whisper_bin.chmod(0o755)
+    model_file = tmp_path / "models" / "ggml-base.en.bin"
+    model_file.parent.mkdir(parents=True, exist_ok=True)
+    model_file.write_text("model")
     with mock.patch(
         "contradiction_clipper.subprocess.run", side_effect=fake_run
     ) as mock_run:
-        cc.transcribe_videos(conn)
-        cc.transcribe_videos(conn)
+        cc.transcribe_videos(conn, whisper_bin=str(whisper_bin))
+        cc.transcribe_videos(conn, whisper_bin=str(whisper_bin))
         assert mock_run.call_count == 1
 
     cursor.execute("SELECT COUNT(*) FROM transcripts WHERE video_id='v1'")
@@ -191,11 +197,17 @@ def test_transcribe_parallel_once(tmp_path, monkeypatch):
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
     monkeypatch.chdir(tmp_path)
+    whisper_bin = tmp_path / "whisper"
+    whisper_bin.write_text("echo stub")
+    whisper_bin.chmod(0o755)
+    model_file = tmp_path / "models" / "ggml-base.en.bin"
+    model_file.parent.mkdir(parents=True, exist_ok=True)
+    model_file.write_text("model")
     with mock.patch(
         "contradiction_clipper.subprocess.run", side_effect=fake_run
     ) as mock_run:
-        cc.transcribe_videos(conn, max_workers=2)
-        cc.transcribe_videos(conn, max_workers=2)
+        cc.transcribe_videos(conn, whisper_bin=str(whisper_bin), max_workers=2)
+        cc.transcribe_videos(conn, whisper_bin=str(whisper_bin), max_workers=2)
         assert mock_run.call_count == 1
 
     cursor.execute("SELECT COUNT(*) FROM transcripts WHERE video_id='v2'")
