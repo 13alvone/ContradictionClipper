@@ -61,7 +61,7 @@ Use transactions per major step; commit only when the sub-step finishes.
 ──────────────────────────────────────────────────────────────────────────────
 5. FUTURE NICE-TO-HAVES (NOT YET MANDATORY)
 ──────────────────────────────────────────────────────────────────────────────
-• Concurrent download + STT with a bounded thread / process pool.  
+• Concurrent download + STT implemented via `--max_workers` flag.
 • `--force` flags to override duplicate protections intentionally.  
 • GUI wrapper (Flask/Electron) reading the same DB.  
 • Pluggable STT and NLI back-ends (GPU Whisper, distilled NLI, etc.).  

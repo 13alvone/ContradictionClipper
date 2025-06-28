@@ -53,6 +53,23 @@ def test_process_videos_dedup(tmp_path):
     conn.close()
 
 
+def test_process_videos_parallel_dedup(tmp_path):
+    """Parallel processing should not duplicate URLs."""
+    conn, db_path = setup_db(tmp_path)
+    urls = ["http://example.com/video1", "http://example.com/video1"]
+    list_file = tmp_path / "urls.txt"
+    list_file.write_text("\n".join(urls))
+    with mock.patch(
+        "contradiction_clipper.download_video", side_effect=fake_download
+    ) as mock_dl:
+        cc.process_videos(str(list_file), db_path, max_workers=2)
+        assert mock_dl.call_count == 1
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM videos")
+    assert cursor.fetchone()[0] == 1
+    conn.close()
+
+
 def test_embed_transcripts_unique(tmp_path):
     """Ensure embeddings are created only once per transcript."""
     conn, _ = setup_db(tmp_path)
@@ -122,5 +139,36 @@ def test_transcribe_videos_once(tmp_path, monkeypatch):
         assert mock_run.call_count == 1
 
     cursor.execute("SELECT COUNT(*) FROM transcripts WHERE video_id='v1'")
+    assert cursor.fetchone()[0] == 1
+    conn.close()
+
+
+def test_transcribe_parallel_once(tmp_path, monkeypatch):
+    """Parallel transcription should only occur once per video."""
+    conn, _ = setup_db(tmp_path)
+    cursor = conn.cursor()
+    video_path = tmp_path / "v2.mp4"
+    video_path.write_bytes(b"data")
+    cursor.execute(
+        "INSERT INTO videos(url, video_id, file_path, sha256, dl_timestamp)"
+        " VALUES(?,?,?,?,?)",
+        ("http://x/v2", "v2", str(video_path), "hash2", "now"),
+    )
+    conn.commit()
+
+    def fake_run(cmd, capture_output=True, text=True, check=False):
+        out_dir = tmp_path / "transcripts"
+        out_dir.mkdir(exist_ok=True)
+        out_file = out_dir / "v2.json"
+        out_file.write_text('{"segments": [{"start": 0, "end": 1, "text": "hi"}]}')
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.chdir(tmp_path)
+    with mock.patch("contradiction_clipper.subprocess.run", side_effect=fake_run) as mock_run:
+        cc.transcribe_videos(conn, max_workers=2)
+        cc.transcribe_videos(conn, max_workers=2)
+        assert mock_run.call_count == 1
+
+    cursor.execute("SELECT COUNT(*) FROM transcripts WHERE video_id='v2'")
     assert cursor.fetchone()[0] == 1
     conn.close()
