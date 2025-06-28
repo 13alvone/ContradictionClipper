@@ -209,7 +209,7 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
             cur.execute('SELECT 1 FROM files WHERE sha256=?', (file_hash,))
             file_exists = cur.fetchone() is not None
 
-            if not file_exists:
+            try:
                 cur.execute(
                     (
                         'INSERT INTO files (sha256, video_id, file_path, size_bytes, hash_ts) '
@@ -224,9 +224,10 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
                     ),
                 )
                 logging.info('[i] [%s] Stored file %s', thread_name, vid)
-            else:
+            except sqlite3.IntegrityError:
                 logging.info('[!] [%s] Duplicate video content for %s; using existing file', thread_name, url)
                 os.remove(path)
+                file_exists = True
 
             try:
                 cur.execute(
