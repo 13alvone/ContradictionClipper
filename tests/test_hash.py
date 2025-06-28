@@ -39,18 +39,19 @@ def test_unique_url_constraint(tmp_path):
     cc.init_db(conn)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO videos (url, video_id, file_path, sha256, dl_timestamp) "
+        "INSERT INTO files (sha256, video_id, file_path, size_bytes, hash_ts) "
         "VALUES (?, ?, ?, ?, ?)",
-        ("http://example.com/a", "a", "/tmp/a.mp4", "hash1", "now"),
+        ("hash1", "a", "/tmp/a.mp4", 1, "now"),
+    )
+    cursor.execute(
+        "INSERT INTO videos (url, file_hash, dl_timestamp) VALUES (?, ?, ?)",
+        ("http://example.com/a", "hash1", "now"),
     )
     conn.commit()
     with pytest.raises(sqlite3.IntegrityError):
         cursor.execute(
-            (
-                "INSERT INTO videos (url, video_id, file_path, sha256, "
-                "dl_timestamp) VALUES (?, ?, ?, ?, ?)"
-            ),
-            ("http://example.com/a", "b", "/tmp/b.mp4", "hash2", "now"),
+            "INSERT INTO videos (url, file_hash, dl_timestamp) VALUES (?, ?, ?)",
+            ("http://example.com/a", "hash2", "now"),
         )
         conn.commit()
     conn.close()

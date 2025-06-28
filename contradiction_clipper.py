@@ -17,7 +17,7 @@ import dashboard
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
 DB_PATH = 'db/contradictions.db'
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 def get_schema_version(conn):
     """Return the current schema version, or 0 if table missing."""
@@ -58,13 +58,23 @@ def init_db(conn):
     cursor = conn.cursor()
     cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS files (
+            sha256 TEXT PRIMARY KEY,
+            video_id TEXT,
+            file_path TEXT,
+            size_bytes INTEGER,
+            hash_ts TEXT
+        )
+        """
+    )
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS videos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url TEXT UNIQUE,
-            video_id TEXT,
-            file_path TEXT,
-            sha256 TEXT UNIQUE,
-            dl_timestamp TEXT
+            file_hash TEXT,
+            dl_timestamp TEXT,
+            FOREIGN KEY(file_hash) REFERENCES files(sha256)
         )
         """
     )
@@ -194,25 +204,39 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
             path, vid = download_video(url)
             file_hash = hash_file(path)
 
-            cur.execute('SELECT id FROM videos WHERE sha256=?', (file_hash,))
-            if cur.fetchone():
-                logging.info('[!] [%s] Duplicate video content for %s; removing.', thread_name, url)
+            cur.execute('SELECT 1 FROM files WHERE sha256=?', (file_hash,))
+            file_exists = cur.fetchone() is not None
+
+            if not file_exists:
+                cur.execute(
+                    (
+                        'INSERT INTO files (sha256, video_id, file_path, size_bytes, hash_ts) '
+                        'VALUES (?, ?, ?, ?, ?)'
+                    ),
+                    (
+                        file_hash,
+                        vid,
+                        path,
+                        os.path.getsize(path),
+                        datetime.utcnow().isoformat(),
+                    ),
+                )
+                logging.info('[i] [%s] Stored file %s', thread_name, vid)
+            else:
+                logging.info('[!] [%s] Duplicate video content for %s; using existing file', thread_name, url)
                 os.remove(path)
-                return
 
             try:
                 cur.execute(
-                    (
-                        'INSERT INTO videos (url, video_id, file_path, sha256, '
-                        'dl_timestamp) VALUES (?, ?, ?, ?, ?)'
-                    ),
-                    (url, vid, path, file_hash, datetime.utcnow().isoformat()),
+                    'INSERT INTO videos (url, file_hash, dl_timestamp) VALUES (?, ?, ?)',
+                    (url, file_hash, datetime.utcnow().isoformat()),
                 )
                 conn_w.commit()
-                logging.info('[i] [%s] Stored video %s', thread_name, vid)
+                logging.info('[i] [%s] Recorded URL %s', thread_name, url)
             except sqlite3.IntegrityError:
-                logging.info('[!] [%s] Video already recorded for %s', thread_name, url)
-                os.remove(path)
+                logging.info('[!] [%s] URL already recorded %s', thread_name, url)
+                if not file_exists:
+                    os.remove(path)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging.error('[x] [%s] Failed to process %s: %s', thread_name, url, exc)
         finally:
@@ -228,7 +252,7 @@ def transcribe_videos(db_conn, whisper_bin='./whisper', max_workers=4):
     """Transcribe new videos using whisper and populate the transcripts table."""
     logging.info('[i] Transcribing videos with %s workers.', max_workers)
     cursor = db_conn.cursor()
-    cursor.execute('SELECT video_id, file_path FROM videos')
+    cursor.execute('SELECT video_id, file_path FROM files')
     videos = cursor.fetchall()
 
     os.makedirs('transcripts', exist_ok=True)

@@ -89,7 +89,11 @@ The resulting video montage will be located in:
 
 Contradiction Clipper stores its data in an SQLite database. A `schema_version`
 table tracks migrations so newer releases can upgrade the schema safely. The
-current schema version is `1`.
+current schema version is `2`.
+
+Version 2 introduces a dedicated `files` table keyed by SHA256 hashes. Each
+row represents a unique downloaded file and is referenced by entries in the
+`videos` table.
 
 ---
 
