@@ -278,6 +278,17 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
     Populate the transcripts table.
     """
     logging.info("[i] Transcribing videos with %s workers.", max_workers)
+    if not os.path.isfile(whisper_bin):
+        logging.error("[x] Whisper binary not found: %s", whisper_bin)
+        logging.error("[x] Run install_whisper.sh or pass --whisper-bin")
+        return
+    model_file = os.path.join("models", "ggml-base.en.bin")
+    if not os.path.isfile(model_file):
+        logging.error(
+            "[x] Whisper model missing: %s. Run install_whisper.sh to download it.",
+            model_file,
+        )
+        return
     db_conn.execute("PRAGMA journal_mode=WAL")
     cursor = db_conn.cursor()
     cursor.execute("SELECT video_id, file_path FROM files")

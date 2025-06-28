@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 - `install_whisper.sh` script automates cloning and building `whisper.cpp`.
 - README updated to reference the new installation script.
 
+## [0.1.15] - 06-28-2025
+### Fixed
+- `install_whisper.sh` and `build_whisper.sh` now download the default
+  Whisper model so transcription works out of the box.
+- `transcribe_videos` checks for the binary and model before running and
+  logs a helpful error if either is missing.
+
 ## [0.1.13] - 06-27-2025
 ### Changed
 - Replaced placeholder SHA-256 transcript embeddings with actual vectors from
