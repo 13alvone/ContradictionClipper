@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.10] - 2025-07-07
+### Changed
+- NLI models are now cached in memory by `load_nli_model` to avoid repeated
+  loading on subsequent runs.
+
 ## [0.1.9] - 2025-07-06
 ### Changed
 - Enabled SQLite WAL mode before threaded writes in `process_videos` and `transcribe_videos` to reduce lock contention.

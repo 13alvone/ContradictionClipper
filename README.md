@@ -27,6 +27,7 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 - `moviepy` (version `~=1.0` with FFmpeg installed, required only for `--compile`)
 - `roberta-large-mnli` (Hugging Face model for contradiction detection)
 - `Flask` (for the optional dashboard)
+- NLI models are cached in memory during detection for faster repeated runs
 
 ### ⚙️ Installation:
 
