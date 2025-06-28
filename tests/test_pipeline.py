@@ -8,6 +8,7 @@ from unittest import mock
 import sys
 from pathlib import Path
 import subprocess
+import numpy as np
 
 # Ensure repository root is on the module path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -81,12 +82,22 @@ def test_embed_transcripts_unique(tmp_path):
     )
     tid = cursor.lastrowid
     conn.commit()
-    cc.embed_transcripts(conn)
-    cc.embed_transcripts(conn)
+    def fake_loader(_name="all-MiniLM-L6-v2"):
+        class Dummy:
+            def encode(self, text, show_progress_bar=False):
+                return np.array([0.1, 0.2, 0.3], dtype=np.float32)
+
+        return Dummy()
+
+    with mock.patch("contradiction_clipper.load_embedding_model", fake_loader):
+        cc.embed_transcripts(conn)
+        cc.embed_transcripts(conn)
     cursor.execute(
-        "SELECT COUNT(*) FROM embeddings WHERE transcript_id=?", (tid,)
+        "SELECT embedding FROM embeddings WHERE transcript_id=?", (tid,)
     )
-    assert cursor.fetchone()[0] == 1
+    rows = cursor.fetchall()
+    assert len(rows) == 1
+    assert isinstance(rows[0][0], bytes)
     conn.close()
 
 

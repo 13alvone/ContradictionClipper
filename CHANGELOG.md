@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.13] - 06-27-2025
+### Changed
+- Replaced placeholder SHA-256 transcript embeddings with actual vectors from
+  `sentence-transformers` stored as binary blobs.
+
 ## [0.1.11] - 06-27-2025
 ### Added
 - `--whisper-bin` CLI option to specify the path to the Whisper binary.
