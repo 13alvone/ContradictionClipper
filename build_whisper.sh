@@ -20,4 +20,15 @@ echo "[i] Cleaning up"
 cd "$ROOT_DIR"
 rm -rf whisper.cpp
 
+MODEL_DIR="$ROOT_DIR/models"
+MODEL_FILE="$MODEL_DIR/ggml-base.en.bin"
+if [ ! -f "$MODEL_FILE" ]; then
+    echo "[i] Downloading default Whisper model..."
+    mkdir -p "$MODEL_DIR"
+    curl -L -o "$MODEL_FILE" \
+        https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+else
+    echo "[i] Whisper model already present"
+fi
+
 echo "[i] Whisper build complete"

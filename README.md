@@ -66,7 +66,8 @@ docker run --rm -v "$PWD":/app contradiction-clipper \
 
         ./install_whisper.sh
 
-        # If the binary is located elsewhere, pass its path via --whisper-bin
+        # This builds whisper.cpp and downloads the default model to ./models
+        # If the binary lives elsewhere, pass its path via --whisper-bin
 
 Docker users may skip Steps 2 and 3 after building the image because it installs
 dependencies and runs `install_whisper.sh` automatically.

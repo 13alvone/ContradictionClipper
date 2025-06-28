@@ -29,6 +29,17 @@ echo "[i] Moving binary to $WHISPER_BIN"
 cp ./build/bin/main "$WHISPER_BIN"
 cd "$ROOT_DIR"
 
+MODEL_DIR="$ROOT_DIR/models"
+MODEL_FILE="$MODEL_DIR/ggml-base.en.bin"
+if [ ! -f "$MODEL_FILE" ]; then
+    echo "[i] Downloading default Whisper model..."
+    mkdir -p "$MODEL_DIR"
+    curl -L -o "$MODEL_FILE" \
+        https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+else
+    echo "[i] Whisper model already present"
+fi
+
 if [ -f "$WHISPER_BIN" ] && [ -x "$WHISPER_BIN" ]; then
     echo "[i] Whisper installed successfully."
 else
