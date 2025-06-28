@@ -12,6 +12,7 @@ import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import dashboard
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
@@ -492,6 +493,11 @@ def main():
         default=4,
         help='Maximum parallel workers for download and transcription.'
     )
+    parser.add_argument(
+        '--dashboard',
+        action='store_true',
+        help='Launch the web dashboard interface.'
+    )
 
     args = parser.parse_args()
 
@@ -520,6 +526,9 @@ def main():
 
     db_conn.close()
     logging.info("[i] Contradiction Clipper pipeline completed successfully.")
+
+    if args.dashboard:
+        dashboard.run_dashboard(DB_PATH)
 
 
 if __name__ == "__main__":
