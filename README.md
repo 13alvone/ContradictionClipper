@@ -31,7 +31,8 @@ Run the pipeline (mount the working directory so results persist):
 
 ```
 docker run --rm -v "$PWD":/app contradiction-clipper \
-    --video_list urls.txt --transcribe --embed --detect --compile
+    python contradiction_clipper.py --video_list urls.txt \
+    --transcribe --embed --detect --compile
 ```
 
 ---
