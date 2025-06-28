@@ -593,6 +593,11 @@ def main():
         help='Transcribe downloaded videos with whisper.'
     )
     parser.add_argument(
+        '--whisper-bin',
+        default='./whisper',
+        help='Path to Whisper binary used for transcription.'
+    )
+    parser.add_argument(
         '--embed',
         action='store_true',
         help='Generate embeddings for transcripts.'
@@ -654,7 +659,11 @@ def main():
         process_videos(args.video_list, max_workers=args.max_workers)
 
     if args.transcribe:
-        transcribe_videos(db_conn, max_workers=args.max_workers)
+        transcribe_videos(
+            db_conn,
+            whisper_bin=args.whisper_bin,
+            max_workers=args.max_workers,
+        )
 
     if args.embed:
         embed_transcripts(db_conn)

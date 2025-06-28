@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.11] - 2025-07-08
+### Added
+- `--whisper-bin` CLI option to specify the path to the Whisper binary.
+
 ## [0.1.10] - 2025-07-07
 ### Changed
 - NLI models are now cached in memory by `load_nli_model` to avoid repeated

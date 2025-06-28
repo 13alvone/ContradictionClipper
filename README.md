@@ -46,8 +46,10 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 
 	git clone https://github.com/ggerganov/whisper.cpp.git
 	cd whisper.cpp
-	make
-	cp ./whisper ../
+        make
+        cp ./whisper ../
+
+        # If whisper is located elsewhere, pass its path via --whisper-bin
 
 Ensure `ffmpeg` is installed and available in your system PATH.
 
@@ -63,6 +65,7 @@ Ensure `ffmpeg` is installed and available in your system PATH.
 2. Run the entire pipeline (download, transcribe, embed, detect contradictions, and compile montage):
 
                 ./contradiction_clipper.py --video_list urls.txt --transcribe --embed --detect --compile --top_n 20 --max_workers 4
+                # add --whisper-bin /path/to/whisper if the binary lives elsewhere
 
 The resulting video montage will be located in:
 
@@ -103,6 +106,7 @@ row represents a unique downloaded file and is referenced by entries in the
 
 - `--video_list`: Path to URLs list.
 - `--transcribe`: Transcribe downloaded videos with Whisper.
+- `--whisper-bin`: Path to the Whisper binary (default: `./whisper`).
 - `--embed`: Generate semantic embeddings.
 - `--detect`: Detect contradictions.
 - `--compile`: Compile detected contradictions into a montage.
