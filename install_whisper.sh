@@ -26,7 +26,7 @@ echo "[i] Building whisper.cpp"
 make $MAKE_FLAGS
 
 echo "[i] Moving binary to $WHISPER_BIN"
-cp ./build/bin/main "$WHISPER_BIN"
+cp ./build/bin/whisper-cli "$WHISPER_BIN"
 cd "$ROOT_DIR"
 
 MODEL_DIR="$ROOT_DIR/models"

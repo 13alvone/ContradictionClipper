@@ -69,6 +69,8 @@ Run the pipeline (mount the working directory so results persist):
         ./install_whisper.sh
 
         # This builds whisper.cpp and downloads the default model to ./models
+        # The script copies the whisper-cli binary to ./whisper for use by
+        # the pipeline.
         # If the binary lives elsewhere, pass its path via --whisper-bin
         # If you skip this step, the pipeline will automatically run the
         # script when transcription is requested.
