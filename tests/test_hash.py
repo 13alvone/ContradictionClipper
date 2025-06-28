@@ -4,12 +4,18 @@
 import hashlib
 import sqlite3
 import sys
+import types
 from pathlib import Path
 
 import pytest
 
 # Ensure repository root is on the module path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+# Provide dummy moviepy modules so the import in contradiction_clipper does not
+# require the actual dependency during tests.
+sys.modules.setdefault("moviepy", types.ModuleType("moviepy"))
+sys.modules.setdefault("moviepy.editor", types.ModuleType("moviepy.editor"))
 
 import contradiction_clipper as cc  # noqa: E402
 # pylint: disable=wrong-import-position
