@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2025-06-30
+### Added
+- Lightweight NLI scoring via Hugging Face models.
+- `--nli-model` CLI option to select the model.
+
 ## [0.1.2] - 2025-06-29
 ### Added
 - `--transcribe` flag to invoke Whisper transcription.

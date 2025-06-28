@@ -82,8 +82,14 @@ def test_detect_contradictions_unique(tmp_path):
         "INSERT INTO transcripts(video_id, text) VALUES('vid', 'true')"
     )
     conn.commit()
-    cc.detect_contradictions(conn)
-    cc.detect_contradictions(conn)
+
+    def fake_loader(_model):
+        return lambda a, b: 0.8
+
+    with mock.patch("contradiction_clipper.load_nli_model", fake_loader):
+        cc.detect_contradictions(conn)
+        cc.detect_contradictions(conn)
+
     cursor.execute("SELECT COUNT(*) FROM contradictions")
     assert cursor.fetchone()[0] == 1
     conn.close()

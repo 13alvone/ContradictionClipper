@@ -232,18 +232,31 @@ def embed_transcripts(db_conn):
             logging.error('[x] Failed to embed transcript %s: %s', tid, exc)
 
 
-def _contradiction_score(text_a, text_b):
-    logging.debug('[DEBUG] Scoring possible contradiction')
-    if 'not' in text_a.lower() and 'not' not in text_b.lower():
-        return 0.9
-    if 'not' in text_b.lower() and 'not' not in text_a.lower():
-        return 0.9
-    return 0.0
+def load_nli_model(model_name="roberta-large-mnli"):
+    """Return a scoring function using a transformers NLI model."""
+    from transformers import AutoTokenizer, AutoModelForSequenceClassification
+    import torch
+
+    logging.info('[i] Loading NLI model: %s', model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    contr_idx = model.config.label2id.get("CONTRADICTION", 0)
+
+    def score(text_a, text_b):
+        logging.debug('[DEBUG] Scoring contradiction for: %s | %s', text_a, text_b)
+        inputs = tokenizer(text_a, text_b, return_tensors="pt", truncation=True)
+        with torch.no_grad():
+            logits = model(**inputs).logits
+        probs = torch.softmax(logits, dim=1)[0].tolist()
+        return float(probs[contr_idx])
+
+    return score
 
 
-def detect_contradictions(db_conn):
+def detect_contradictions(db_conn, nli_model="roberta-large-mnli"):
     """Detect and store contradictions between transcript segments."""
     logging.info('[i] Detecting contradictions.')
+    scorer = load_nli_model(nli_model)
     cursor = db_conn.cursor()
     cursor.execute('SELECT id, text FROM transcripts')
     transcripts = cursor.fetchall()
@@ -267,7 +280,7 @@ def detect_contradictions(db_conn):
                 continue
 
             try:
-                score = _contradiction_score(text_a, text_b)
+                score = scorer(text_a, text_b)
                 if score > 0:
                     cursor.execute(
                         (
@@ -424,6 +437,11 @@ def main():
         help='Detect contradictions in transcripts.'
     )
     parser.add_argument(
+        '--nli-model',
+        default='roberta-large-mnli',
+        help='Hugging Face model path or name for NLI.'
+    )
+    parser.add_argument(
         '--compile',
         action='store_true',
         help='Compile detected contradictions into video.'
@@ -455,7 +473,7 @@ def main():
         embed_transcripts(db_conn)
 
     if args.detect:
-        detect_contradictions(db_conn)
+        detect_contradictions(db_conn, nli_model=args.nli_model)
 
     if args.compile:
         compile_contradiction_montage(db_conn, top_n=args.top_n)
