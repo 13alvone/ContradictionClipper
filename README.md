@@ -27,14 +27,15 @@ Build the Docker image (installs all Python requirements and executes
 docker build -t contradiction-clipper .
 ```
 
-Run the pipeline (mount the working directory so results persist):
+Run the pipeline (mount a directory for results and use the built-in app code):
 
 ```
-    docker run --rm -v "$PWD":/app contradiction-clipper \
-        python contradiction_clipper.py --video_list urls.txt \
+    docker run --rm \
+        -v "$PWD":/workspace -w /workspace \
+        contradiction-clipper \
+        python /app/contradiction_clipper.py --video_list urls.txt \
         --transcribe --embed --detect --compile
-    # The container will run install_whisper.sh automatically if the
-    # whisper binary or model are missing in the mounted directory.
+    # Whisper will be installed automatically on first use.
 ```
 
 ---

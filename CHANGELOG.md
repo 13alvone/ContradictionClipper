@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.17] - 06-29-2025
+### Fixed
+- Docker run instructions mount the host directory to `/workspace` and run the
+  pipeline from `/app`, preventing missing-file errors when launched outside the
+  repo root.
+
 ## [0.1.16] - 06-29-2025
 ### Added
 - Automatic invocation of `install_whisper.sh` when the Whisper binary or model
