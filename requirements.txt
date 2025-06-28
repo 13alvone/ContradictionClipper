@@ -1,0 +1,8 @@
+yt-dlp
+sentence-transformers
+transformers
+moviepy
+torch
+torchvision
+torchaudio
+
