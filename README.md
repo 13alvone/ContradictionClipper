@@ -32,7 +32,7 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 ### ⚙️ Installation:
 
 **Step 1: Clone the repository**
-	
+
 	git clone <your_repo_url>
         cd ContradictionClipper
 

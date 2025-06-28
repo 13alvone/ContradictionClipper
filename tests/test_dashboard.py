@@ -12,10 +12,13 @@ def test_dashboard_routes(tmp_path):
     db = tmp_path / "test.db"
     conn = sqlite3.connect(db)
     conn.execute(
-        "CREATE TABLE files(sha256 TEXT PRIMARY KEY, video_id TEXT, file_path TEXT, size_bytes INTEGER, hash_ts TEXT)"
+        "CREATE TABLE files(sha256 TEXT PRIMARY KEY,"
+        " video_id TEXT, file_path TEXT, size_bytes INTEGER, hash_ts TEXT)"
     )
     conn.execute(
-        "CREATE TABLE videos(id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, file_hash TEXT, dl_timestamp TEXT)"
+        "CREATE TABLE videos("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE,"
+        " file_hash TEXT, dl_timestamp TEXT)"
     )
     conn.commit()
     conn.close()
@@ -24,4 +27,3 @@ def test_dashboard_routes(tmp_path):
     client = app.test_client()
     assert client.get("/").status_code == 200
     assert client.get("/videos").status_code == 200
-

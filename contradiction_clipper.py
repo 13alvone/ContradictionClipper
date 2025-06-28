@@ -14,17 +14,18 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import dashboard
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
-DB_PATH = 'db/contradictions.db'
+DB_PATH = "db/contradictions.db"
 SCHEMA_VERSION = 2
+
 
 def get_schema_version(conn):
     """Return the current schema version, or 0 if table missing."""
     cursor = conn.cursor()
     try:
         cursor.execute(
-            'SELECT version FROM schema_version ORDER BY version DESC LIMIT 1'
+            "SELECT version FROM schema_version ORDER BY version DESC LIMIT 1"
         )
         row = cursor.fetchone()
         return row[0] if row else 0
@@ -42,19 +43,20 @@ def migrate_db(conn, target_version=SCHEMA_VERSION):
     if current < target_version:
         # Placeholder for future migrations
         cursor.execute(
-            'INSERT INTO schema_version(version, applied_at) VALUES (?, ?)',
+            "INSERT INTO schema_version(version, applied_at) VALUES (?, ?)",
             (target_version, datetime.utcnow().isoformat()),
         )
         conn.commit()
     elif current > target_version:
         raise RuntimeError(
-            f'Database schema version {current} newer than supported {target_version}'
+            "Database schema version "
+            f"{current} newer than supported {target_version}"
         )
 
 
 def init_db(conn):
     """Create required tables with UNIQUE constraints."""
-    logging.info('[i] Initializing database schema.')
+    logging.info("[i] Initializing database schema.")
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -121,7 +123,7 @@ def init_db(conn):
     conn.commit()
     if get_schema_version(conn) == 0:
         cursor.execute(
-            'INSERT INTO schema_version(version, applied_at) VALUES (?, ?)',
+            "INSERT INTO schema_version(version, applied_at) VALUES (?, ?)",
             (SCHEMA_VERSION, datetime.utcnow().isoformat()),
         )
         conn.commit()
@@ -129,64 +131,64 @@ def init_db(conn):
 
 def hash_file(path):
     """Return SHA256 hash of a file."""
-    logging.debug('[DEBUG] Hashing file %s', path)
+    logging.debug("[DEBUG] Hashing file %s", path)
     sha256 = hashlib.sha256()
-    with open(path, 'rb') as f:
-        for chunk in iter(lambda: f.read(8192), b''):
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
             sha256.update(chunk)
     return sha256.hexdigest()
 
 
 def download_video(url):
     """Download a video using yt-dlp and return the local path and video id."""
-    logging.info('[i] Downloading video from %s', url)
-    os.makedirs('videos/raw', exist_ok=True)
+    logging.info("[i] Downloading video from %s", url)
+    os.makedirs("videos/raw", exist_ok=True)
     vid_res = subprocess.run(
-        ['yt-dlp', '--get-id', url],
+        ["yt-dlp", "--get-id", url],
         capture_output=True,
         text=True,
         check=False,
     )
     if vid_res.returncode != 0:
-        logging.error('[x] Failed to get video id: %s', vid_res.stderr.strip())
+        logging.error("[x] Failed to get video id: %s", vid_res.stderr.strip())
         raise RuntimeError(vid_res.stderr.strip())
     video_id = vid_res.stdout.strip()
-    logging.debug('[DEBUG] Video id %s resolved for %s', video_id, url)
-    template = f'videos/raw/{video_id}.%(ext)s'
+    logging.debug("[DEBUG] Video id %s resolved for %s", video_id, url)
+    template = f"videos/raw/{video_id}.%(ext)s"
     res = subprocess.run(
-        ['yt-dlp', '-f', 'best', '-o', template, url],
+        ["yt-dlp", "-f", "best", "-o", template, url],
         capture_output=True,
         text=True,
         check=False,
     )
     if res.returncode != 0:
-        logging.error('[x] Download failed: %s', res.stderr.strip())
+        logging.error("[x] Download failed: %s", res.stderr.strip())
         raise RuntimeError(res.stderr.strip())
-    for ext in ['mp4', 'mkv', 'webm', 'flv', 'mov']:
-        candidate = os.path.join('videos/raw', f'{video_id}.{ext}')
+    for ext in ["mp4", "mkv", "webm", "flv", "mov"]:
+        candidate = os.path.join("videos/raw", f"{video_id}.{ext}")
         if os.path.exists(candidate):
-            logging.info('[i] Video downloaded to %s', candidate)
+            logging.info("[i] Video downloaded to %s", candidate)
             return candidate, video_id
-    logging.error('[x] Unable to locate downloaded file for %s', url)
-    raise FileNotFoundError(f'Unable to locate downloaded file for {url}')
+    logging.error("[x] Unable to locate downloaded file for %s", url)
+    raise FileNotFoundError(f"Unable to locate downloaded file for {url}")
 
 
 def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
     """Download videos, compute hashes and record them if unseen."""
-    logging.info('[i] Processing videos with %s workers.', max_workers)
+    logging.info("[i] Processing videos with %s workers.", max_workers)
     conn = sqlite3.connect(db_path)
-    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute("PRAGMA journal_mode=WAL")
     migrate_db(conn)
     cursor = conn.cursor()
 
-    with open(video_list_path, 'r', encoding='utf-8') as f:
+    with open(video_list_path, "r", encoding="utf-8") as f:
         raw_urls = [line.strip() for line in f if line.strip()]
 
     urls = []
     for url in raw_urls:
-        cursor.execute('SELECT id FROM videos WHERE url=?', (url,))
+        cursor.execute("SELECT id FROM videos WHERE url=?", (url,))
         if cursor.fetchone():
-            logging.info('[!] Already processed URL, skipping: %s', url)
+            logging.info("[!] Already processed URL, skipping: %s", url)
             continue
         if url not in urls:
             urls.append(url)
@@ -194,26 +196,31 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
     def worker(url):
         thread_name = threading.current_thread().name
         conn_w = sqlite3.connect(db_path, check_same_thread=False)
-        conn_w.execute('PRAGMA journal_mode=WAL')
+        conn_w.execute("PRAGMA journal_mode=WAL")
         cur = conn_w.cursor()
         try:
-            cur.execute('SELECT id FROM videos WHERE url=?', (url,))
+            cur.execute("SELECT id FROM videos WHERE url=?", (url,))
             if cur.fetchone():
-                logging.info('[!] [%s] Already processed URL, skipping: %s', thread_name, url)
+                logging.info(
+                    "[!] [%s] Already processed URL, skipping: %s",
+                    thread_name,
+                    url,
+                )
                 return
 
-            logging.info('[i] [%s] Downloading %s', thread_name, url)
+            logging.info("[i] [%s] Downloading %s", thread_name, url)
             path, vid = download_video(url)
             file_hash = hash_file(path)
 
-            cur.execute('SELECT 1 FROM files WHERE sha256=?', (file_hash,))
+            cur.execute("SELECT 1 FROM files WHERE sha256=?", (file_hash,))
             file_exists = cur.fetchone() is not None
 
             try:
                 cur.execute(
                     (
-                        'INSERT INTO files (sha256, video_id, file_path, size_bytes, hash_ts) '
-                        'VALUES (?, ?, ?, ?, ?)'
+                        "INSERT INTO files (sha256, video_id, file_path, "
+                        "size_bytes, hash_ts) "
+                        "VALUES (?, ?, ?, ?, ?)"
                     ),
                     (
                         file_hash,
@@ -223,25 +230,35 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
                         datetime.utcnow().isoformat(),
                     ),
                 )
-                logging.info('[i] [%s] Stored file %s', thread_name, vid)
+                logging.info("[i] [%s] Stored file %s", thread_name, vid)
             except sqlite3.IntegrityError:
-                logging.info('[!] [%s] Duplicate video content for %s; using existing file', thread_name, url)
+                logging.info(
+                    "[!] [%s] Duplicate video content for %s; "
+                    "using existing file",
+                    thread_name,
+                    url,
+                )
                 os.remove(path)
                 file_exists = True
 
             try:
                 cur.execute(
-                    'INSERT INTO videos (url, file_hash, dl_timestamp) VALUES (?, ?, ?)',
+                    "INSERT INTO videos (url, file_hash, dl_timestamp) "
+                    "VALUES (?, ?, ?)",
                     (url, file_hash, datetime.utcnow().isoformat()),
                 )
                 conn_w.commit()
-                logging.info('[i] [%s] Recorded URL %s', thread_name, url)
+                logging.info("[i] [%s] Recorded URL %s", thread_name, url)
             except sqlite3.IntegrityError:
-                logging.info('[!] [%s] URL already recorded %s', thread_name, url)
+                logging.info(
+                    "[!] [%s] URL already recorded %s", thread_name, url
+                )
                 if not file_exists:
                     os.remove(path)
         except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging.error('[x] [%s] Failed to process %s: %s', thread_name, url, exc)
+            logging.error(
+                "[x] [%s] Failed to process %s: %s", thread_name, url, exc
+            )
         finally:
             conn_w.close()
 
@@ -251,59 +268,92 @@ def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
     conn.close()
 
 
-def transcribe_videos(db_conn, whisper_bin='./whisper', max_workers=4):
-    """Transcribe new videos using whisper and populate the transcripts table."""
-    logging.info('[i] Transcribing videos with %s workers.', max_workers)
-    db_conn.execute('PRAGMA journal_mode=WAL')
+def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
+    """Transcribe new videos with whisper.
+
+    Populate the transcripts table.
+    """
+    logging.info("[i] Transcribing videos with %s workers.", max_workers)
+    db_conn.execute("PRAGMA journal_mode=WAL")
     cursor = db_conn.cursor()
-    cursor.execute('SELECT video_id, file_path FROM files')
+    cursor.execute("SELECT video_id, file_path FROM files")
     videos = cursor.fetchall()
 
-    os.makedirs('transcripts', exist_ok=True)
+    os.makedirs("transcripts", exist_ok=True)
 
-    db_path = db_conn.execute('PRAGMA database_list').fetchone()[2]
+    db_path = db_conn.execute("PRAGMA database_list").fetchone()[2]
 
     def worker(item):
         vid, path = item
         thread_name = threading.current_thread().name
         conn_w = sqlite3.connect(db_path, check_same_thread=False)
-        conn_w.execute('PRAGMA journal_mode=WAL')
+        conn_w.execute("PRAGMA journal_mode=WAL")
         cur = conn_w.cursor()
-        cur.execute('SELECT 1 FROM transcripts WHERE video_id=?', (vid,))
+        cur.execute("SELECT 1 FROM transcripts WHERE video_id=?", (vid,))
         if cur.fetchone():
-            logging.info('[!] [%s] Transcript already exists for %s, skipping.', thread_name, vid)
+            logging.info(
+                "[!] [%s] Transcript already exists for %s, skipping.",
+                thread_name,
+                vid,
+            )
             conn_w.close()
             return
 
-        out_json = os.path.join('transcripts', f'{vid}.json')
+        out_json = os.path.join("transcripts", f"{vid}.json")
         result = subprocess.run(
-            [whisper_bin, path, '--output_format', 'json', '--output_dir', 'transcripts', '--output_file', vid],
+            [
+                whisper_bin,
+                path,
+                "--output_format",
+                "json",
+                "--output_dir",
+                "transcripts",
+                "--output_file",
+                vid,
+            ],
             capture_output=True,
             text=True,
             check=False,
         )
         if result.returncode != 0:
-            logging.error('[x] [%s] Whisper failed for %s: %s', thread_name, vid, result.stderr.strip())
+            logging.error(
+                "[x] [%s] Whisper failed for %s: %s",
+                thread_name,
+                vid,
+                result.stderr.strip(),
+            )
             conn_w.close()
             return
         if not os.path.exists(out_json):
-            logging.error('[x] [%s] Transcript output missing for %s', thread_name, vid)
+            logging.error(
+                "[x] [%s] Transcript output missing for %s", thread_name, vid
+            )
             conn_w.close()
             return
 
         try:
-            with open(out_json, 'r', encoding='utf-8') as f:
+            with open(out_json, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            for seg in data.get('segments', []):
+            for seg in data.get("segments", []):
                 cur.execute(
-                    'INSERT INTO transcripts (video_id, segment_start, segment_end, text) '
-                    'VALUES (?, ?, ?, ?)',
-                    (vid, seg.get('start'), seg.get('end'), seg.get('text')),
+                    "INSERT INTO transcripts (video_id, segment_start, "
+                    "segment_end, text) VALUES (?, ?, ?, ?)",
+                    (
+                        vid,
+                        seg.get("start"),
+                        seg.get("end"),
+                        seg.get("text"),
+                    ),
                 )
             conn_w.commit()
-            logging.info('[i] [%s] Transcribed %s', thread_name, vid)
+            logging.info("[i] [%s] Transcribed %s", thread_name, vid)
         except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging.error('[x] [%s] Failed to store transcript for %s: %s', thread_name, vid, exc)
+            logging.error(
+                "[x] [%s] Failed to store transcript for %s: %s",
+                thread_name,
+                vid,
+                exc,
+            )
         finally:
             conn_w.close()
 
@@ -313,34 +363,35 @@ def transcribe_videos(db_conn, whisper_bin='./whisper', max_workers=4):
 
 def embed_transcripts(db_conn):
     """Generate embeddings for transcripts without existing embeddings."""
-    logging.info('[i] Embedding transcripts.')
+    logging.info("[i] Embedding transcripts.")
     cursor = db_conn.cursor()
-    cursor.execute('SELECT id, text FROM transcripts')
+    cursor.execute("SELECT id, text FROM transcripts")
     rows = cursor.fetchall()
 
     for tid, text in rows:
         cursor.execute(
-            'SELECT 1 FROM embeddings WHERE transcript_id=?', (tid,))
+            "SELECT 1 FROM embeddings WHERE transcript_id=?", (tid,)
+        )
         if cursor.fetchone():
             logging.info(
-                '[!] Embedding exists for transcript %s, skipping.', tid
+                "[!] Embedding exists for transcript %s, skipping.", tid
             )
             continue
 
         try:
-            emb = hashlib.sha256(text.encode('utf-8')).hexdigest()
+            emb = hashlib.sha256(text.encode("utf-8")).hexdigest()
             cursor.execute(
                 (
-                    'INSERT INTO embeddings '
-                    '(transcript_id, embedding, created_at) '
-                    'VALUES (?, ?, ?)'
+                    "INSERT INTO embeddings "
+                    "(transcript_id, embedding, created_at) "
+                    "VALUES (?, ?, ?)"
                 ),
-                (tid, emb.encode('utf-8'), datetime.utcnow().isoformat()),
+                (tid, emb.encode("utf-8"), datetime.utcnow().isoformat()),
             )
             db_conn.commit()
-            logging.info('[i] Embedded transcript %s', tid)
+            logging.info("[i] Embedded transcript %s", tid)
         except Exception as exc:
-            logging.error('[x] Failed to embed transcript %s: %s', tid, exc)
+            logging.error("[x] Failed to embed transcript %s: %s", tid, exc)
 
 
 _NLI_CACHE = {}
@@ -356,18 +407,22 @@ def load_nli_model(model_name="roberta-large-mnli"):
     import torch
 
     if model_name in _NLI_CACHE:
-        logging.info('[i] Reusing cached NLI model: %s', model_name)
+        logging.info("[i] Reusing cached NLI model: %s", model_name)
         tokenizer, model, contr_idx = _NLI_CACHE[model_name]
     else:
-        logging.info('[i] Loading NLI model: %s', model_name)
+        logging.info("[i] Loading NLI model: %s", model_name)
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForSequenceClassification.from_pretrained(model_name)
         contr_idx = model.config.label2id.get("CONTRADICTION", 0)
         _NLI_CACHE[model_name] = (tokenizer, model, contr_idx)
 
     def score(text_a, text_b):
-        logging.debug('[DEBUG] Scoring contradiction for: %s | %s', text_a, text_b)
-        inputs = tokenizer(text_a, text_b, return_tensors="pt", truncation=True)
+        logging.debug(
+            "[DEBUG] Scoring contradiction for: %s | %s", text_a, text_b
+        )
+        inputs = tokenizer(
+            text_a, text_b, return_tensors="pt", truncation=True
+        )
         with torch.no_grad():
             logits = model(**inputs).logits
         probs = torch.softmax(logits, dim=1)[0].tolist()
@@ -378,25 +433,25 @@ def load_nli_model(model_name="roberta-large-mnli"):
 
 def detect_contradictions(db_conn, nli_model="roberta-large-mnli"):
     """Detect and store contradictions between transcript segments."""
-    logging.info('[i] Detecting contradictions.')
+    logging.info("[i] Detecting contradictions.")
     scorer = load_nli_model(nli_model)
     cursor = db_conn.cursor()
-    cursor.execute('SELECT id, text FROM transcripts')
+    cursor.execute("SELECT id, text FROM transcripts")
     transcripts = cursor.fetchall()
 
     for i, (id_a, text_a) in enumerate(transcripts):
         for id_b, text_b in transcripts[i + 1:]:
-            logging.debug('[DEBUG] Evaluating %s-%s', id_a, id_b)
+            logging.debug("[DEBUG] Evaluating %s-%s", id_a, id_b)
             cursor.execute(
                 (
-                    'SELECT 1 FROM contradictions WHERE '
-                    'segment_a_id=? AND segment_b_id=?'
+                    "SELECT 1 FROM contradictions WHERE "
+                    "segment_a_id=? AND segment_b_id=?"
                 ),
                 (id_a, id_b),
             )
             if cursor.fetchone():
                 logging.info(
-                    '[!] Contradiction already recorded for %s-%s, skipping.',
+                    "[!] Contradiction already recorded for %s-%s, skipping.",
                     id_a,
                     id_b,
                 )
@@ -407,22 +462,22 @@ def detect_contradictions(db_conn, nli_model="roberta-large-mnli"):
                 if score > 0:
                     cursor.execute(
                         (
-                            'INSERT INTO contradictions '
-                            '(segment_a_id, segment_b_id, confidence) '
-                            'VALUES (?, ?, ?)'
+                            "INSERT INTO contradictions "
+                            "(segment_a_id, segment_b_id, confidence) "
+                            "VALUES (?, ?, ?)"
                         ),
                         (id_a, id_b, score),
                     )
                     db_conn.commit()
                     logging.info(
-                        '[i] Contradiction stored for %s-%s score=%s',
+                        "[i] Contradiction stored for %s-%s score=%s",
                         id_a,
                         id_b,
                         score,
                     )
             except Exception as exc:
                 logging.error(
-                    '[x] Failed to evaluate contradiction for %s-%s: %s',
+                    "[x] Failed to evaluate contradiction for %s-%s: %s",
                     id_a,
                     id_b,
                     exc,
@@ -446,8 +501,8 @@ def extract_clip(video_path, start_time, end_time, output_path):
             snippet = clip.subclip(start_time, end_time)
             snippet.write_videofile(
                 output_path,
-                codec='libx264',
-                audio_codec='aac',
+                codec="libx264",
+                audio_codec="aac",
                 verbose=False,
                 logger=None,
             )
@@ -460,7 +515,7 @@ def extract_clip(video_path, start_time, end_time, output_path):
 
 def compile_contradiction_montage(
     db_conn,
-    output_file='output/contradiction_montage.mp4',
+    output_file="output/contradiction_montage.mp4",
     clip_duration=15,
     top_n=20,
 ):
@@ -473,10 +528,11 @@ def compile_contradiction_montage(
             "moviepy is required for compiling montages. "
             "Install it with 'pip install moviepy'."
         ) from exc
-    logging.info('[i] Compiling contradiction montage video.')
+    logging.info("[i] Compiling contradiction montage video.")
     cursor = db_conn.cursor()
 
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT
             t1.video_id, t1.segment_start, t1.segment_end,
             t2.video_id, t2.segment_start, t2.segment_end,
@@ -485,7 +541,9 @@ def compile_contradiction_montage(
         JOIN transcripts t1 ON c.segment_a_id = t1.id
         JOIN transcripts t2 ON c.segment_b_id = t2.id
         ORDER BY c.confidence DESC LIMIT ?
-    ''', (top_n,))
+    """,
+        (top_n,),
+    )
 
     contradictions = cursor.fetchall()
     clips = []
@@ -499,18 +557,18 @@ def compile_contradiction_montage(
         _end2,
         _conf,
     ) in enumerate(contradictions):
-        video1_path = f'videos/raw/{vid1}.mp4'
-        video2_path = f'videos/raw/{vid2}.mp4'
+        video1_path = f"videos/raw/{vid1}.mp4"
+        video2_path = f"videos/raw/{vid2}.mp4"
 
         clip1_start = max(0, start1 - 2)
         clip1_end = clip1_start + clip_duration
         clip2_start = max(0, start2 - 2)
         clip2_end = clip2_start + clip_duration
 
-        clip1_path = f'videos/processed/contradiction_{idx}_a.mp4'
-        clip2_path = f'videos/processed/contradiction_{idx}_b.mp4'
+        clip1_path = f"videos/processed/contradiction_{idx}_a.mp4"
+        clip2_path = f"videos/processed/contradiction_{idx}_b.mp4"
 
-        os.makedirs('videos/processed', exist_ok=True)
+        os.makedirs("videos/processed", exist_ok=True)
 
         if extract_clip(video1_path, clip1_start, clip1_end, clip1_path):
             clips.append(VideoFileClip(clip1_path))
@@ -519,43 +577,43 @@ def compile_contradiction_montage(
             clips.append(VideoFileClip(clip2_path))
 
     if not clips:
-        logging.warning('[!] No clips extracted. Exiting compilation.')
+        logging.warning("[!] No clips extracted. Exiting compilation.")
         return
 
     final_video = concatenate_videoclips(clips, method="compose")
     final_video.write_videofile(
         output_file,
-        codec='libx264',
-        audio_codec='aac',
+        codec="libx264",
+        audio_codec="aac",
     )
 
     logging.info(
-        '[i] Contradiction montage successfully created: %s', output_file
+        "[i] Contradiction montage successfully created: %s", output_file
     )
 
 
 def summarize_contradictions(db_conn, output_file="output/contradictions.txt"):
     """Write a human-readable summary of all detected contradictions."""
-    logging.info('[i] Generating contradiction summary: %s', output_file)
+    logging.info("[i] Generating contradiction summary: %s", output_file)
     cursor = db_conn.cursor()
     cursor.execute(
-        '''
+        """
         SELECT t1.video_id, t1.segment_start, t1.segment_end, t1.text,
                t2.video_id, t2.segment_start, t2.segment_end, t2.text
         FROM contradictions c
         JOIN transcripts t1 ON c.segment_a_id = t1.id
         JOIN transcripts t2 ON c.segment_b_id = t2.id
         ORDER BY c.id
-        '''
+        """
     )
     rows = cursor.fetchall()
     if not rows:
-        logging.warning('[!] No contradictions found to summarize.')
+        logging.warning("[!] No contradictions found to summarize.")
         return
     dir_name = os.path.dirname(output_file)
     if dir_name:
         os.makedirs(dir_name, exist_ok=True)
-    with open(output_file, 'w', encoding='utf-8') as fh:
+    with open(output_file, "w", encoding="utf-8") as fh:
         for (
             vid1,
             start1,
@@ -571,78 +629,80 @@ def summarize_contradictions(db_conn, output_file="output/contradictions.txt"):
             start2 = 0 if start2 is None else start2
             end2 = 0 if end2 is None else end2
             paragraph = (
-                f"In video {vid1} at {start1:.1f}-{end1:.1f}s: \"{text1.strip()}\". "
-                f"This contradicts video {vid2} at {start2:.1f}-{end2:.1f}s: \"{text2.strip()}\"."
+                f'In video {vid1} at {start1:.1f}-{end1:.1f}s: '
+                f'"{text1.strip()}". '
+                f'This contradicts video {vid2} at {start2:.1f}-{end2:.1f}s: '
+                f'"{text2.strip()}".'
             )
             fh.write(paragraph + "\n")
-    logging.info('[i] Summary written to %s', output_file)
+    logging.info("[i] Summary written to %s", output_file)
 
 
 def main():
     """Entry point for the CLI utility."""
-    logging.info('[i] Starting Contradiction Clipper pipeline.')
+    logging.info("[i] Starting Contradiction Clipper pipeline.")
     parser = argparse.ArgumentParser(
-        description='Contradiction Clipper - Complete Pipeline'
+        description="Contradiction Clipper - Complete Pipeline"
     )
     parser.add_argument(
-        '--video_list',
-        help='Path to file containing YouTube video URLs (one per line)'
+        "--video_list",
+        help="Path to file containing YouTube video URLs (one per line)",
     )
     parser.add_argument(
-        '--transcribe',
-        action='store_true',
-        help='Transcribe downloaded videos with whisper.'
+        "--transcribe",
+        action="store_true",
+        help="Transcribe downloaded videos with whisper.",
     )
     parser.add_argument(
-        '--whisper-bin',
-        default='./whisper',
-        help='Path to Whisper binary used for transcription.'
+        "--whisper-bin",
+        default="./whisper",
+        help="Path to Whisper binary used for transcription.",
     )
     parser.add_argument(
-        '--embed',
-        action='store_true',
-        help='Generate embeddings for transcripts.'
+        "--embed",
+        action="store_true",
+        help="Generate embeddings for transcripts.",
     )
     parser.add_argument(
-        '--detect',
-        action='store_true',
-        help='Detect contradictions in transcripts.'
+        "--detect",
+        action="store_true",
+        help="Detect contradictions in transcripts.",
     )
     parser.add_argument(
-        '--nli-model',
-        default='roberta-large-mnli',
-        help='Hugging Face model path or name for NLI.'
+        "--nli-model",
+        default="roberta-large-mnli",
+        help="Hugging Face model path or name for NLI.",
     )
     parser.add_argument(
-        '--compile',
-        action='store_true',
-        help='Compile detected contradictions into video.'
+        "--compile",
+        action="store_true",
+        help="Compile detected contradictions into video.",
     )
     parser.add_argument(
-        '--top_n',
+        "--top_n",
         type=int,
         default=20,
-        help='Number of contradictions to include in the montage.'
+        help="Number of contradictions to include in the montage.",
     )
     parser.add_argument(
-        '--max_workers',
+        "--max_workers",
         type=int,
         default=4,
-        help='Maximum parallel workers for download and transcription.'
+        help="Maximum parallel workers for download and transcription.",
     )
     parser.add_argument(
-        '--dashboard',
-        action='store_true',
-        help='Launch the web dashboard interface.'
+        "--dashboard",
+        action="store_true",
+        help="Launch the web dashboard interface.",
     )
     parser.add_argument(
-        '--summary',
-        nargs='?',
-        const='output/contradictions.txt',
+        "--summary",
+        nargs="?",
+        const="output/contradictions.txt",
         default=None,
         help=(
-            'Write text summary of contradictions to optional FILE. '
-            'Default file is output/contradictions.txt when flag is used.'
+            "Write text summary of contradictions to optional FILE. "
+            "Default file is output/contradictions.txt when flag is used."
         ),
     )
 
@@ -655,7 +715,8 @@ def main():
     if args.video_list:
         if not os.path.exists(args.video_list):
             logging.error(
-                '[x] URL list file does not exist: %s', args.video_list)
+                "[x] URL list file does not exist: %s", args.video_list
+            )
             sys.exit(1)
         process_videos(args.video_list, max_workers=args.max_workers)
 

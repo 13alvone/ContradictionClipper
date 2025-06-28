@@ -13,6 +13,7 @@ import subprocess
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import contradiction_clipper as cc  # noqa: E402
+
 # pylint: disable=wrong-import-position
 
 
@@ -125,8 +126,7 @@ def test_transcribe_videos_once(tmp_path, monkeypatch):
         ("hash", "v1", str(video_path), 4, "now"),
     )
     cursor.execute(
-        "INSERT INTO videos(url, file_hash, dl_timestamp)"
-        " VALUES(?,?,?)",
+        "INSERT INTO videos(url, file_hash, dl_timestamp)" " VALUES(?,?,?)",
         ("http://x/v1", "hash", "now"),
     )
     conn.commit()
@@ -135,11 +135,15 @@ def test_transcribe_videos_once(tmp_path, monkeypatch):
         out_dir = tmp_path / "transcripts"
         out_dir.mkdir(exist_ok=True)
         out_file = out_dir / "v1.json"
-        out_file.write_text('{"segments": [{"start": 0, "end": 1, "text": "hi"}]}')
+        out_file.write_text(
+            '{"segments": [{"start": 0, "end": 1, "text": "hi"}]}'
+        )
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
     monkeypatch.chdir(tmp_path)
-    with mock.patch("contradiction_clipper.subprocess.run", side_effect=fake_run) as mock_run:
+    with mock.patch(
+        "contradiction_clipper.subprocess.run", side_effect=fake_run
+    ) as mock_run:
         cc.transcribe_videos(conn)
         cc.transcribe_videos(conn)
         assert mock_run.call_count == 1
@@ -161,8 +165,7 @@ def test_transcribe_parallel_once(tmp_path, monkeypatch):
         ("hash2", "v2", str(video_path), 4, "now"),
     )
     cursor.execute(
-        "INSERT INTO videos(url, file_hash, dl_timestamp)"
-        " VALUES(?,?,?)",
+        "INSERT INTO videos(url, file_hash, dl_timestamp)" " VALUES(?,?,?)",
         ("http://x/v2", "hash2", "now"),
     )
     conn.commit()
@@ -171,11 +174,15 @@ def test_transcribe_parallel_once(tmp_path, monkeypatch):
         out_dir = tmp_path / "transcripts"
         out_dir.mkdir(exist_ok=True)
         out_file = out_dir / "v2.json"
-        out_file.write_text('{"segments": [{"start": 0, "end": 1, "text": "hi"}]}')
+        out_file.write_text(
+            '{"segments": [{"start": 0, "end": 1, "text": "hi"}]}'
+        )
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
     monkeypatch.chdir(tmp_path)
-    with mock.patch("contradiction_clipper.subprocess.run", side_effect=fake_run) as mock_run:
+    with mock.patch(
+        "contradiction_clipper.subprocess.run", side_effect=fake_run
+    ) as mock_run:
         cc.transcribe_videos(conn, max_workers=2)
         cc.transcribe_videos(conn, max_workers=2)
         assert mock_run.call_count == 1
@@ -226,7 +233,9 @@ def test_process_videos_duplicate_files(tmp_path):
         path.write_bytes(b"data")
         return str(path), vid
 
-    with mock.patch("contradiction_clipper.download_video", side_effect=fake_dl):
+    with mock.patch(
+        "contradiction_clipper.download_video", side_effect=fake_dl
+    ):
         cc.process_videos(str(list_file), db_path, max_workers=1)
 
     cursor = conn.cursor()
