@@ -329,12 +329,11 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
             [
                 whisper_bin,
                 path,
-                "--output_format",
-                "json",
-                "--output_dir",
-                "transcripts",
-                "--output_file",
-                vid,
+                "--model",
+                "models/ggml-base.en.bin",
+                "-oj",
+                "--output-file",
+                os.path.join("transcripts", vid),
             ],
             capture_output=True,
             text=True,
@@ -352,6 +351,16 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
         if not os.path.exists(out_json):
             logging.error(
                 "[x] [%s] Transcript output missing for %s", thread_name, vid
+            )
+            logging.debug(
+                "[DEBUG] [%s] Whisper stdout: %s",
+                thread_name,
+                result.stdout.strip(),
+            )
+            logging.debug(
+                "[DEBUG] [%s] Whisper stderr: %s",
+                thread_name,
+                result.stderr.strip(),
             )
             conn_w.close()
             return
