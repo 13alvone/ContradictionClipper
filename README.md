@@ -18,7 +18,26 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 
 ## 🚀 Quick Start
 
-### 📦 Dependencies:
+### 🐳 Docker (Preferred)
+
+Build the Docker image:
+
+```
+docker build -t contradiction-clipper .
+```
+
+Run the pipeline (mount the working directory so results persist):
+
+```
+docker run --rm -v "$PWD":/app contradiction-clipper \
+    --video_list urls.txt --transcribe --embed --detect --compile
+```
+
+---
+
+### 📦 Manual Installation
+
+#### Dependencies
 - Python 3.x
 - `yt-dlp`
 - `whisper.cpp` (required for `--transcribe`)
@@ -29,11 +48,11 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 - The NLI model (`roberta-large-mnli`) is automatically downloaded by `transformers`
 - NLI models are cached in memory during detection for faster repeated runs
 
-### ⚙️ Installation:
+#### Installation
 
 **Step 1: Clone the repository**
 
-	git clone <your_repo_url>
+        git clone <your_repo_url>
         cd ContradictionClipper
 
 **Step 2: Install Python dependencies**
@@ -44,14 +63,15 @@ Contradiction Clipper automates the extraction of contradictory statements from 
 
 **Step 3: Setup Whisper (optimized for CPU)**
 
-	git clone https://github.com/ggerganov/whisper.cpp.git
-	cd whisper.cpp
+        git clone https://github.com/ggerganov/whisper.cpp.git
+        cd whisper.cpp
         make
         cp ./whisper ../
 
         # If whisper is located elsewhere, pass its path via --whisper-bin
 
 Ensure `ffmpeg` is installed and available in your system PATH.
+
 
 ---
 
