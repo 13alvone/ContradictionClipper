@@ -20,8 +20,14 @@ else
 fi
 
 # macOS requires explicit flags to avoid unsupported ARM instructions
-if [[ "$(uname)" == "Darwin" ]]; then
+ARCH="$(uname -m)"
+UNAME="$(uname)"
+if [[ "$UNAME" == "Darwin" ]]; then
     CMAKE_ARGS="-DGGML_METAL=ON -DGGML_METAL_USE_BF16=ON -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DCMAKE_OSX_ARCHITECTURES=$(uname -m)"
+    make $MAKE_FLAGS CMAKE_ARGS="$CMAKE_ARGS"
+elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+    # Generic ARM build avoids unsupported instructions on devices without DOTPROD
+    CMAKE_ARGS="-DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a"
     make $MAKE_FLAGS CMAKE_ARGS="$CMAKE_ARGS"
 else
     make $MAKE_FLAGS
