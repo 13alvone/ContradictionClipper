@@ -79,6 +79,9 @@ Docker users may skip Steps 2 and 3 after building the image because it installs
 dependencies and runs `install_whisper.sh` automatically.
 
 Ensure `ffmpeg` is installed and available in your system PATH.
+If you plan to build Whisper yourself (outside Docker), install the
+`libavcodec-dev`, `libavformat-dev`, and `libavutil-dev` packages so the
+binary can decode common formats like MP4.
 
 ### Transcription
 

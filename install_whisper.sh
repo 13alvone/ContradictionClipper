@@ -16,10 +16,12 @@ fi
 
 cd "$WHISPER_DIR"
 
-MAKE_FLAGS=""
+MAKE_FLAGS="WHISPER_FFMPEG=1"
 if command -v nvidia-smi >/dev/null 2>&1; then
-    echo "[i] Nvidia GPU detected; building with CUDA support."
-    MAKE_FLAGS="WHISPER_CUBLAS=1"
+    echo "[i] Nvidia GPU detected; building with CUDA and FFmpeg support."
+    MAKE_FLAGS="WHISPER_CUBLAS=1 WHISPER_FFMPEG=1"
+else
+    echo "[i] Building with FFmpeg support."
 fi
 
 echo "[i] Building whisper.cpp"

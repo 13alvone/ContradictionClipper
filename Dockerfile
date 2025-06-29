@@ -6,7 +6,8 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        ffmpeg git build-essential cmake curl ccache && \
+        ffmpeg libavcodec-dev libavformat-dev libavutil-dev \
+        git build-essential cmake curl ccache && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
