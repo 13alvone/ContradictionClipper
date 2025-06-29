@@ -86,8 +86,8 @@ binary can decode common formats like MP4.
 ### Transcription
 
 When running the pipeline with `--transcribe`, the Whisper binary is
-now invoked with `--model models/ggml-base.en.bin` so the English base
-model is always used. If the transcript JSON file is not created,
+invoked with `--model models/ggml-base.en.bin -f <video>` so the English
+base model is always used. If the transcript JSON file is not created,
 Whisper's stdout and stderr are logged to help diagnose the issue.
 
 
