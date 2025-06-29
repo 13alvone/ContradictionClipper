@@ -27,17 +27,25 @@ _EMBED_MODELS = {}
 def ensure_whisper_installed(whisper_bin):
     """Build whisper.cpp and download the model if missing."""
     script = os.path.join(os.path.dirname(__file__), "install_whisper.sh")
-    if os.path.isfile(whisper_bin) and os.path.isfile(os.path.join("models", "ggml-base.en.bin")):
+    model_file = os.path.join("models", "ggml-base.en.bin")
+    if os.path.isfile(whisper_bin) and os.path.isfile(model_file):
         return True
     if not os.path.isfile(script):
         logging.error("[x] install_whisper.sh not found: %s", script)
         return False
     logging.info("[i] Running install_whisper.sh to set up Whisper.")
     result = subprocess.run([script], capture_output=True, text=True)
+    if result.stdout:
+        logging.info("[i] install_whisper.sh stdout: %s", result.stdout.strip())
+    if result.stderr:
+        logging.info("[i] install_whisper.sh stderr: %s", result.stderr.strip())
     if result.returncode != 0:
-        logging.error("[x] install_whisper.sh failed: %s", result.stderr.strip())
+        logging.error("[x] install_whisper.sh failed")
         return False
-    return os.path.isfile(whisper_bin) and os.path.isfile(os.path.join("models", "ggml-base.en.bin"))
+    ok = os.path.isfile(whisper_bin) and os.path.isfile(model_file)
+    if not ok:
+        logging.error("[x] Whisper installation missing binary or model.")
+    return ok
 
 
 def get_schema_version(conn):
@@ -353,15 +361,11 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
             logging.error(
                 "[x] [%s] Transcript output missing for %s", thread_name, vid
             )
-            logging.debug(
-                "[DEBUG] [%s] Whisper stdout: %s",
-                thread_name,
-                result.stdout.strip(),
+            logging.info(
+                "[i] [%s] Whisper stdout: %s", thread_name, result.stdout.strip()
             )
-            logging.debug(
-                "[DEBUG] [%s] Whisper stderr: %s",
-                thread_name,
-                result.stderr.strip(),
+            logging.info(
+                "[i] [%s] Whisper stderr: %s", thread_name, result.stderr.strip()
             )
             conn_w.close()
             return
@@ -758,8 +762,14 @@ def main():
             "Default file is output/contradictions.txt when flag is used."
         ),
     )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        help="Logging verbosity (DEBUG, INFO, WARNING, ERROR).",
+    )
 
     args = parser.parse_args()
+    logging.getLogger().setLevel(args.log_level.upper())
 
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     db_conn = sqlite3.connect(DB_PATH)

@@ -8,6 +8,7 @@ from unittest import mock
 import sys
 from pathlib import Path
 import subprocess
+import logging
 import numpy as np
 
 # Ensure repository root is on the module path
@@ -304,3 +305,17 @@ def test_auto_install_whisper(tmp_path, monkeypatch):
     assert (tmp_path / "whisper").exists()
     assert (tmp_path / "models" / "ggml-base.en.bin").exists()
     conn.close()
+
+
+def test_install_whisper_failure(tmp_path, monkeypatch, caplog):
+    """ensure_whisper_installed returns False when script fails."""
+    fail_script = tmp_path / "install_whisper.sh"
+    fail_script.write_text("#!/bin/bash\necho fail >&2\nexit 1\n")
+    fail_script.chmod(0o755)
+
+    monkeypatch.setattr(cc.os.path, "dirname", lambda _p: str(tmp_path))
+    caplog.set_level(logging.INFO)
+    ok = cc.ensure_whisper_installed(str(tmp_path / "whisper"))
+
+    assert not ok
+    assert any("install_whisper.sh failed" in r.message for r in caplog.records)

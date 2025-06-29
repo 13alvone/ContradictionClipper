@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.18] - 07-01-2025
+### Added
+- `--log-level` flag to control logging verbosity.
+- install script output now logged and checked for errors.
+- Unit test covers failing Whisper installation.
+
 ## [0.1.16] - 06-29-2025
 ### Added
 - Automatic invocation of `install_whisper.sh` when the Whisper binary or model
