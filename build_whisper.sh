@@ -18,7 +18,14 @@ if command -v nvidia-smi >/dev/null 2>&1; then
 else
     echo "[i] Building with FFmpeg support."
 fi
-make $MAKE_FLAGS
+
+# macOS requires explicit flags to avoid unsupported ARM instructions
+if [[ "$(uname)" == "Darwin" ]]; then
+    CMAKE_ARGS="-DGGML_METAL=ON -DGGML_METAL_USE_BF16=ON -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DCMAKE_OSX_ARCHITECTURES=$(uname -m)"
+    make $MAKE_FLAGS CMAKE_ARGS="$CMAKE_ARGS"
+else
+    make $MAKE_FLAGS
+fi
 
 echo "[i] Copying binary"
 cp ./build/bin/whisper-cli "$ROOT_DIR/whisper"

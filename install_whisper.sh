@@ -25,7 +25,12 @@ else
 fi
 
 echo "[i] Building whisper.cpp"
-make $MAKE_FLAGS
+if [[ "$(uname)" == "Darwin" ]]; then
+    CMAKE_ARGS="-DGGML_METAL=ON -DGGML_METAL_USE_BF16=ON -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DCMAKE_OSX_ARCHITECTURES=$(uname -m)"
+    make $MAKE_FLAGS CMAKE_ARGS="$CMAKE_ARGS"
+else
+    make $MAKE_FLAGS
+fi
 
 echo "[i] Moving binary to $WHISPER_BIN"
 cp ./build/bin/whisper-cli "$WHISPER_BIN"
