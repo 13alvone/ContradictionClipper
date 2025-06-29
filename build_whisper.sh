@@ -11,7 +11,14 @@ git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git
 
 echo "[i] Building whisper.cpp"
 cd whisper.cpp
-make
+MAKE_FLAGS="WHISPER_FFMPEG=1"
+if command -v nvidia-smi >/dev/null 2>&1; then
+    echo "[i] Nvidia GPU detected; building with CUDA and FFmpeg support."
+    MAKE_FLAGS="WHISPER_CUBLAS=1 WHISPER_FFMPEG=1"
+else
+    echo "[i] Building with FFmpeg support."
+fi
+make $MAKE_FLAGS
 
 echo "[i] Copying binary"
 cp ./build/bin/whisper-cli "$ROOT_DIR/whisper"
