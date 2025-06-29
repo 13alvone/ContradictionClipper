@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.20] - 07-03-2025
+### Fixed
+- Whisper build now falls back to a generic ARM target on Linux ARM
+  devices, preventing "selected processor does not support" errors.
+
 ## [0.1.19] - 07-02-2025
 ### Added
 - Helper `convert_to_wav` converts videos to mono 16kHz WAV using ffmpeg.

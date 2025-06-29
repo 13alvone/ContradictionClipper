@@ -77,6 +77,8 @@ Run the pipeline (mount the working directory so results persist):
         # script when transcription is requested.
         # On macOS the script builds with Metal support and disables
         # unsupported ARM instructions automatically.
+        # On Linux ARM devices the script falls back to a generic
+        # armv8-a target to avoid instruction errors.
 
 Docker users may skip Steps 2 and 3 after building the image because it installs
 dependencies and runs `install_whisper.sh` automatically.
