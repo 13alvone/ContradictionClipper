@@ -328,9 +328,10 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
         result = subprocess.run(
             [
                 whisper_bin,
-                path,
                 "--model",
                 "models/ggml-base.en.bin",
+                "-f",
+                path,
                 "-oj",
                 "--output-file",
                 os.path.join("transcripts", vid),
