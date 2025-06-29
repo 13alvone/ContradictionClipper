@@ -151,6 +151,7 @@ row represents a unique downloaded file and is referenced by entries in the
 - `--top_n`: Number of contradictions to compile (default: 20).
 - `--nli-model`: Hugging Face model path or name for contradiction scoring.
 - `--max_workers`: Number of parallel workers for downloading and transcription (default: 4).
+- `--verbose`: Enable debug logging for troubleshooting.
 
 ---
 

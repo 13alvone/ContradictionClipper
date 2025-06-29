@@ -2,16 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.16] - 06-29-2025
-### Added
-- Automatic invocation of `install_whisper.sh` when the Whisper binary or model
-  is missing.
-- README updated with note about automatic installation and Docker usage.
+## [0.1.18] - 07-01-2025
+### Changed
+- `transcribe_videos` now logs Whisper stdout and stderr at ERROR level when the
+  transcript output is missing.
+- Added `--verbose` CLI flag to enable debug logging.
+- README updated with the new flag.
 
 ## [0.1.17] - 06-30-2025
 ### Changed
 - Installation scripts now copy `whisper-cli` from whisper.cpp instead of `main`.
 - README notes the binary change in the Whisper setup instructions.
+
+## [0.1.16] - 06-29-2025
+### Added
+- Automatic invocation of `install_whisper.sh` when the Whisper binary or model
+  is missing.
+- README updated with note about automatic installation and Docker usage.
 
 ## [0.1.15] - 06-28-2025
 ### Fixed

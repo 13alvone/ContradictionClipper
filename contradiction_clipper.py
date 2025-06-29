@@ -352,13 +352,13 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
             logging.error(
                 "[x] [%s] Transcript output missing for %s", thread_name, vid
             )
-            logging.debug(
-                "[DEBUG] [%s] Whisper stdout: %s",
+            logging.error(
+                "[x] [%s] Whisper stdout: %s",
                 thread_name,
                 result.stdout.strip(),
             )
-            logging.debug(
-                "[DEBUG] [%s] Whisper stderr: %s",
+            logging.error(
+                "[x] [%s] Whisper stderr: %s",
                 thread_name,
                 result.stderr.strip(),
             )
@@ -743,6 +743,11 @@ def main():
         help="Maximum parallel workers for download and transcription.",
     )
     parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose debug logging.",
+    )
+    parser.add_argument(
         "--dashboard",
         action="store_true",
         help="Launch the web dashboard interface.",
@@ -759,6 +764,10 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.debug("[DEBUG] Verbose logging enabled")
 
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     db_conn = sqlite3.connect(DB_PATH)
