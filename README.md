@@ -44,6 +44,7 @@ Run the pipeline (mount the working directory so results persist):
 #### Dependencies
 - Python 3.x
 - `yt-dlp`
+- `ffmpeg` (required for audio conversion and video processing)
 - `whisper.cpp` (required for `--transcribe`)
 - `sentence-transformers`
 - `transformers`
