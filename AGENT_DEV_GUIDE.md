@@ -51,6 +51,7 @@ Use transactions per major step; commit only when the sub-step finishes.
 • argparse  All new flags documented via `--help` and follow UNIX patterns.
 • logging   Use logging with `[i]`, `[!]`, `[x]`, `[DEBUG]` prefixes (already
   established).
+• `--log-level` flag controls global verbosity; default is `INFO`.
 • Error Handling  NEVER swallow exceptions; catch, log, and continue or abort
   cleanly.
 • Tests     Add basic unit tests (pytest) for hash detection, DB uniqueness,

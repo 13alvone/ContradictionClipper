@@ -104,6 +104,7 @@ Whisper's stdout and stderr are logged to help diagnose the issue.
 
                 ./contradiction_clipper.py --video_list urls.txt --transcribe --embed --detect --compile --top_n 20 --max_workers 4
                 # add --whisper-bin /path/to/whisper if the binary lives elsewhere
+                # set --log-level DEBUG for more verbose logs
 
 The resulting video montage will be located in:
 
@@ -154,6 +155,7 @@ row represents a unique downloaded file and is referenced by entries in the
 - `--top_n`: Number of contradictions to compile (default: 20).
 - `--nli-model`: Hugging Face model path or name for contradiction scoring.
 - `--max_workers`: Number of parallel workers for downloading and transcription (default: 4).
+- `--log-level`: Logging verbosity (DEBUG, INFO, WARNING, ERROR).
 
 ---
 
