@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.19] - 07-02-2025
+### Added
+- Helper `convert_to_wav` converts videos to mono 16kHz WAV using ffmpeg.
+- Transcription now converts videos to WAV before invoking Whisper.
+- Unit tests patch `convert_to_wav`.
+- README notes ffmpeg as a required dependency.
+
 ## [0.1.18] - 07-01-2025
 ### Added
 - `--log-level` flag to control logging verbosity.

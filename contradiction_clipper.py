@@ -13,6 +13,7 @@ import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import tempfile
 import dashboard
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -201,6 +202,17 @@ def download_video(url):
     raise FileNotFoundError(f"Unable to locate downloaded file for {url}")
 
 
+def convert_to_wav(src, dst):
+    """Convert an input media file to mono 16kHz WAV via ffmpeg."""
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", src, "-ac", "1", "-ar", "16000", dst],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return dst
+
+
 def process_videos(video_list_path, db_path=DB_PATH, max_workers=4):
     """Download videos, compute hashes and record them if unseen."""
     logging.info("[i] Processing videos with %s workers.", max_workers)
@@ -333,13 +345,23 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
             return
 
         out_json = os.path.join("transcripts", f"{vid}.json")
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            wav_path = tmp.name
+        try:
+            convert_to_wav(path, wav_path)
+        except subprocess.CalledProcessError as exc:
+            logging.error("[x] [%s] ffmpeg failed for %s: %s", thread_name, vid, exc)
+            os.unlink(wav_path)
+            conn_w.close()
+            return
+
         result = subprocess.run(
             [
                 whisper_bin,
                 "--model",
                 "models/ggml-base.en.bin",
                 "-f",
-                path,
+                wav_path,
                 "-oj",
                 "--output-file",
                 os.path.join("transcripts", vid),
@@ -348,6 +370,7 @@ def transcribe_videos(db_conn, whisper_bin="./whisper", max_workers=4):
             text=True,
             check=False,
         )
+        os.unlink(wav_path)
         if result.returncode != 0:
             logging.error(
                 "[x] [%s] Whisper failed for %s: %s",

@@ -159,9 +159,15 @@ def test_transcribe_videos_once(tmp_path, monkeypatch):
     model_file = tmp_path / "models" / "ggml-base.en.bin"
     model_file.parent.mkdir(parents=True, exist_ok=True)
     model_file.write_text("model")
+    def fake_convert(_src, dst):
+        Path(dst).write_bytes(b"wav")
+        return dst
+
     with mock.patch(
         "contradiction_clipper.subprocess.run", side_effect=fake_run
-    ) as mock_run:
+    ) as mock_run, mock.patch(
+        "contradiction_clipper.convert_to_wav", side_effect=fake_convert
+    ):
         cc.transcribe_videos(conn, whisper_bin=str(whisper_bin))
         cc.transcribe_videos(conn, whisper_bin=str(whisper_bin))
         assert mock_run.call_count == 1
@@ -204,9 +210,15 @@ def test_transcribe_parallel_once(tmp_path, monkeypatch):
     model_file = tmp_path / "models" / "ggml-base.en.bin"
     model_file.parent.mkdir(parents=True, exist_ok=True)
     model_file.write_text("model")
+    def fake_convert(_src, dst):
+        Path(dst).write_bytes(b"wav")
+        return dst
+
     with mock.patch(
         "contradiction_clipper.subprocess.run", side_effect=fake_run
-    ) as mock_run:
+    ) as mock_run, mock.patch(
+        "contradiction_clipper.convert_to_wav", side_effect=fake_convert
+    ):
         cc.transcribe_videos(conn, whisper_bin=str(whisper_bin), max_workers=2)
         cc.transcribe_videos(conn, whisper_bin=str(whisper_bin), max_workers=2)
         assert mock_run.call_count == 1
