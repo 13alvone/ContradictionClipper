@@ -13,6 +13,12 @@ All notable changes to this project will be documented in this file.
 - Installation scripts now copy `whisper-cli` from whisper.cpp instead of `main`.
 - README notes the binary change in the Whisper setup instructions.
 
+## [0.1.18] - 07-01-2025
+### Fixed
+- Whisper is now built with FFmpeg support so it can decode MP4 files.
+- Dockerfile installs FFmpeg development libraries to enable this build.
+- README updated to mention required `libav*` packages when building locally.
+
 ## [0.1.15] - 06-28-2025
 ### Fixed
 - `install_whisper.sh` and `build_whisper.sh` now download the default
